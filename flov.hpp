@@ -22,17 +22,24 @@ namespace detail {
 
 namespace type_traits {
 
-template <typename T = void>
-struct Id : std::true_type {};
+template <typename T>
+struct IsNonVoid : std::true_type {};
 
 template <>
-struct Id<> : std::false_type {};
+struct IsNonVoid<void> : std::false_type {};
 
 template <typename T>
-using IfDefined = std::enable_if_t<Id<T>::value>;
+using IfDefined = std::enable_if_t<IsNonVoid<T>::value>;
+
+template <typename T>
+struct AlwaysFalseTrait : std::false_type {};
 
 template <typename Container, typename T = void>
-struct ValueTypeImpl;
+struct ValueTypeImpl {
+  static_assert(AlwaysFalseTrait<T>::value,
+                "Container type has to has typedef'ed |::value_type| type or "
+                "ContainerAdaptor<Container> defined!");
+};
 
 // std:: containers tend to provide such typedef's. Let use them.
 template <typename Container>
