@@ -3,9 +3,9 @@
 
 #include <type_traits>
 
-// Container - underlying container type (std::vector<int> for example). Should
-// be compatible with the following interface: class Container {
-//   using
+// Container - underlying container type (std::vector<int> for example).
+// Should be compatible with the following interface:
+// class Container {
 //   <any-type> push_back(const T&);
 //   <any-type> push_back(T&&);
 // };
