@@ -124,32 +124,34 @@ class adaptor::ContainerAdaptor<X> {
 
 class Y {};
 
-#define DEFINE_HAS_TYPE_MEMBER_TRAIT(ClassName, TypeMemberName)           \
-  template <typename T, typename = void>                                  \
-  struct Has##ClassName##TypeMember##TypeMemberName : std::false_type {}; \
-                                                                          \
-  template <typename T>                                                   \
-  struct Has##ClassName##TypeMember##TypeMemberName<                      \
-      T, Void<typename T::TypeMemberName>> : std::true_type {};           \
-                                                                          \
-  template <typename T>                                                   \
-  /*inline*/ constexpr bool HasTypeMember =                               \
-      Has##ClassName##TypeMember##TypeMemberName<ClassName<T>>::value;
+#define DEFINE_HAS_TYPE_MEMBER_TRAIT(TypeMemberName)                           \
+  template <typename T, typename = void>                                       \
+  struct HasTypeMember##TypeMemberName##Impl : std::false_type {};             \
+                                                                               \
+  template <typename T>                                                        \
+  struct HasTypeMember##TypeMemberName##Impl<T,                                \
+                                             Void<typename T::TypeMemberName>> \
+      : std::true_type {};                                                     \
+                                                                               \
+  template <typename T>                                                        \
+  /*inline*/ constexpr bool HasTypeMember##TypeMemberName =                    \
+      HasTypeMember##TypeMemberName##Impl<T>::value;
 
 namespace ValueTypeImplTest {
 
 using namespace detail::type_traits;
 
-DEFINE_HAS_TYPE_MEMBER_TRAIT(ValueTypeImpl, ValueType)
+DEFINE_HAS_TYPE_MEMBER_TRAIT(ValueType)
 
-static_assert(HasTypeMember<X> && IsSame<typename Flov<X>::ValueType, char>,
+static_assert(HasTypeMemberValueType<ValueTypeImpl<X>> &&
+                  IsSame<typename Flov<X>::ValueType, char>,
               "X has ContainerAdaptor specialization.");
 
 static_assert(
-    !HasTypeMember<Y>,
+    !HasTypeMemberValueType<ValueTypeImpl<Y>>,
     "Y has neither |::value_type| nor ContainerAdaptor specialization.");
 
-static_assert(HasTypeMember<vector<int>> &&
+static_assert(HasTypeMemberValueType<ValueTypeImpl<vector<int>>> &&
                   IsSame<typename Flov<vector<int>>::ValueType, int>,
               "vector<int> has |::value_type| type member.");
 
