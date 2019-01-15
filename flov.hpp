@@ -19,4 +19,9 @@ class Flov {
       -> decltype(std::declval<Container>().push_back(value)) {
     Container::push_back(value);
   }
+
+  auto push_back(ValueType&& value)
+      -> decltype(std::declval<Container>().push_back(std::move(value))) {
+    Container::push_back(std::move(value));
+  }
 };
