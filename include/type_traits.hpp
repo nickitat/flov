@@ -63,6 +63,22 @@ struct ValueTypeImpl<
 template <typename Container>
 using ValueType = typename ValueTypeImpl<Container>::ValueType;
 
+template <typename Container, typename T = void>
+struct IteratorTypeImpl {};
+// std:: containers tend to provide such typedef's. Let use them.
+template <typename Container>
+struct IteratorTypeImpl<Container, Void<typename Container::iterator>> {
+  using Iterator = typename Container::iterator;
+};
+template <typename Container>
+struct IteratorTypeImpl<
+    Container,
+    Void<typename adaptor::ContainerAdaptor<Container>::Iterator>> {
+  using Iterator = typename adaptor::ContainerAdaptor<Container>::Iterator;
+};
+template <typename Container>
+using Iterator = typename IteratorTypeImpl<Container>::Iterator;
+
 }  // namespace type_traits
 
 }  // namespace detail

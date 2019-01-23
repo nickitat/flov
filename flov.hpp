@@ -13,6 +13,7 @@ class CacheFriendlyBinarySearch {};
 template <typename Container>
 class Flov {
  public:
+  using Iterator = detail::type_traits::Iterator<Container>;
   using ValueType = detail::type_traits::ValueType<Container>;
 
   auto push_back(const ValueType& value)

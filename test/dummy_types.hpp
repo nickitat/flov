@@ -14,6 +14,7 @@ class TypeWithContainerAdaptorSpecialization {
 template <>
 class adaptor::ContainerAdaptor<TypeWithContainerAdaptorSpecialization> {
  public:
+  using Iterator = char*;
   using ValueType = char;
 };
 
