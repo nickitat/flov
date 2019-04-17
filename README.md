@@ -34,7 +34,7 @@ Time complexity: *O(KEY_BIT_LEN)*.
 
 Is a bit harder. When we adding a new key we also need to correctly update all the `link`-s of the preceiding keys for which new key is "the nearest node (from the right) with a key having exactly the same first...". There can be many of such nodes. For example, if all currently added keys were from `[0, 15]` then adding `16` will result in updating of the `link[4]` value of all nodes. It means that we cannot guarantee any complexity better than *O(N)* for each `PushBack` call. But there only *O(N***KEY_BIT_LEN)* links in total. It turns out that we can guarantee that each link will be assigned only once (and few other technicalities). In short, we can do `PushBack` in amortized *O(KEY_BIT_LEN)* time. Please refer to the implementation if you interested in details.
 
-### Delete
+### PopBack
 
 TODO. I'm pretty confident that we are able to do it with the same amortized complexity as `PushBack`.
 
