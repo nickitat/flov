@@ -1,11 +1,13 @@
 #pragma once
 
-#include "include/type_traits.hpp"
+#include <constructible_from/constructible_from.hpp>
+#include <type_traits/type_traits.hpp>
 
 #include <type_traits>
 
 #include <limits.h>  // CHAR_BIT
 #include <iostream>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -13,44 +15,66 @@ class Flov;
 
 namespace detail {
 
-template <class Key, uint32_t B, class FLinkT = int32_t, class BLinkT = int32_t>
-class Node {
-  static constexpr FLinkT INFTY = std::numeric_limits<FLinkT>::max();
-  static constexpr BLinkT NEG_INFTY = std::numeric_limits<BLinkT>::lowest();
+namespace links {
+using constructible_from::ConstructibleFrom;
+using constructible_from::MakeUnique;
+using constructible_from::Signature;
 
+template <class From>
+using NonnarrowingConvertibleToInt =
+    type_traits::IsNonnarrowingConvertible<From, int32_t>;
+
+using FLink = MakeUnique<
+    class ForwardLink,
+    typename ConstructibleFrom<int32_t,
+                               Signature<NonnarrowingConvertibleToInt>>::Type>;
+using BLink = MakeUnique<
+    class BackwardLink,
+    typename ConstructibleFrom<int32_t,
+                               Signature<NonnarrowingConvertibleToInt>>::Type>;
+
+bool IsValid(FLink link) {
+  return link >= 0;
+}
+
+bool IsValid(BLink link) {
+  return link >= 0;
+}
+
+static_assert(!std::is_same<FLink, BLink>::value,
+              "Two link types should be different types.");
+}  // namespace links
+
+template <class Key,
+          uint32_t Bits,
+          class FLinkT = links::FLink,
+          class BLinkT = links::BLink>
+class Node {
  public:
   using FLink = FLinkT;
   using BLink = BLinkT;
 
   Node(Key key) : key(key) {
-    std::fill(std::begin(link), std::end(link), (FLinkT)INFTY);
-    std::fill(std::begin(rlink), std::end(rlink), (BLinkT)NEG_INFTY);
-    std::fill(std::begin(match), std::end(match), (BLinkT)NEG_INFTY);
-  }
-
-  // TODO: make links different types, each with its own IsValid() !
-  static bool IsValid(int32_t link) {
-    return link != INFTY && link != NEG_INFTY;
+    std::fill(std::begin(link), std::end(link), -1);
+    std::fill(std::begin(rlink), std::end(rlink), -1);
+    std::fill(std::begin(match), std::end(match), -1);
   }
 
   Key key;  // key stored
 
- private:
-  friend class ::Flov;
+  FLink link[Bits];  // link[i] - nearest position from the right where
+                     // placed a number having first |i| bits equal to the
+                     // first |i| bits of |key| and whose |i|-th bit
+                     // differs from the |i|-th bit of |key|
 
-  FLink link[B];  // link[i] - nearest position from the right where placed a
-                  // number having first |i| bits equal to the first |i| bits
-                  // of |key| and whose |i|-th bit differs from the |i|-th bit
-                  // of |key|
+  BLink rlink[Bits];  // rlink[i] - nearest position from the left where
+                      // placed a number having first |i| bits equal to the
+                      // first |i| bits of |key| and whose |i|-th bit
+                      // differs from the |i|-th bit of |key|
 
-  BLink rlink[B];  // rlink[i] - nearest position from the left where placed a
-                   // number having first |i| bits equal to the first |i| bits
-                   // of |key| and whose |i|-th bit differs from the |i|-th bit
-                   // of |key|
-
-  BLink match[B];  // match[i] - nearest position from the left where
-                   // placed a number having first |i| bits equal to the
-                   // first |i| bits of |key|
+  BLink match[Bits];  // match[i] - nearest position from the left where
+                      // placed a number having first |i| bits equal to the
+                      // first |i| bits of |key|
 };
 
 template <class Node>
@@ -85,7 +109,7 @@ class Flov {
   void PushBack(KeyType key) {
     if (!nodes.empty()) {
       Node newNode{key};
-      const BLink newPos = nodes.size();
+      const BLink newPos = static_cast<int32_t>(nodes.size());
       newNode.match[0] = newPos - 1;
 
       for (int bit = 0; bit < B; ++bit) {
@@ -132,8 +156,8 @@ class Flov {
     Node newNode{key};
     FLink current = 0;
     for (int bit = 0; bit < B && IsValid(current); ++bit) {
-      // if (nodes[current].key == key)
-      //   return current;
+      if (nodes[current].key == key)
+        return current;
       if (KeysDifferInBit(bit, newNode, nodes[current])) {
         current = nodes[current].link[bit];
       }
@@ -142,10 +166,6 @@ class Flov {
   }
 
  private:
-  bool IsValid(int32_t link) const {
-    return Node::IsValid(link);
-  }
-
   std::vector<Node> nodes;
 
   // diagnostic info

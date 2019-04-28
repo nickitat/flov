@@ -3,8 +3,12 @@
 
 #include "../flov.hpp"
 
+#include <algorithm>
 #include <iostream>
+#include <random>
 #include <vector>
+
+using namespace std;
 
 void test() {
   using namespace std;
@@ -20,12 +24,16 @@ void test() {
   vector<int> p(N);
   for (int i = 0; i < N; ++i)
     p[i] = i;
-  random_shuffle(p.begin(), p.end());
+
+  std::random_device rd;
+  std::mt19937 g{rd()};
+  std::shuffle(p.begin(), p.end(), g);
 
   bool mistakesFound = false;
   for (const auto& i : p) {
     auto f = ds.Find(v[i]);
     if (f != i) {
+      mistakesFound = true;
       cout << i << " " << f << " " << v[i] << endl;
     }
   }
