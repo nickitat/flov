@@ -28,3 +28,5 @@ target_include_directories(flov_tests PRIVATE ${PROJECT_SOURCE_DIR}/include/mpl)
 #)
 
 target_compile_options(flov_tests PRIVATE -std=c++17)
+
+# I'm currently using the following script: cmake . -Bbuild -DCMAKE_CXX_COMPILER=clang++ && cmake --build build && build/flov_tests
