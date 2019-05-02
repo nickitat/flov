@@ -2,6 +2,7 @@
 
 #include <constructible_from/constructible_from.hpp>
 #include <type_traits/type_traits.hpp>
+#include <type_traits/type_utilities.hpp>
 
 #include <type_traits>
 
@@ -16,9 +17,7 @@ class Flov;
 namespace detail {
 
 namespace links {
-using constructible_from::ConstructibleFrom;
-using constructible_from::MakeUnique;
-using constructible_from::Signature;
+using namespace constructible_from;
 
 template <class From>
 using NonnarrowingConvertibleToInt =
@@ -26,22 +25,21 @@ using NonnarrowingConvertibleToInt =
 
 using FLink = MakeUnique<
     class ForwardLink,
-    typename ConstructibleFrom<int32_t,
-                               Signature<NonnarrowingConvertibleToInt>>::Type>;
-using BLink = MakeUnique<
-    class BackwardLink,
-    typename ConstructibleFrom<int32_t,
-                               Signature<NonnarrowingConvertibleToInt>>::Type>;
+    ConstructibleFrom<int32_t, Signature<NonnarrowingConvertibleToInt>>::Type>;
 
 bool IsValid(FLink link) {
   return link >= 0;
 }
 
+using BLink = MakeUnique<
+    class BackwardLink,
+    ConstructibleFrom<int32_t, Signature<NonnarrowingConvertibleToInt>>::Type>;
+
 bool IsValid(BLink link) {
   return link >= 0;
 }
 
-static_assert(!std::is_same<FLink, BLink>::value,
+static_assert(!std::is_same_v<FLink, BLink>,
               "Two link types should be different types.");
 }  // namespace links
 
@@ -141,7 +139,8 @@ class Flov {
         while (IsValid(currToBeLinkedWithNewNode) &&
                !IsValid(nodes[currToBeLinkedWithNewNode].link[bit])) {
           numOfUpdates++;
-          nodes[currToBeLinkedWithNewNode].link[bit] = newPos;
+          nodes[currToBeLinkedWithNewNode].link[bit] =
+              static_cast<BLink::DataType>(newPos);
           currToBeLinkedWithNewNode =
               nodes[currToBeLinkedWithNewNode].match[bit + 1];
         }
