@@ -58,7 +58,7 @@ class Node {
     std::fill(std::begin(match), std::end(match), -1);
   }
 
-  Key key;  // key stored
+  Key key;  // the key stored
 
   FLink link[Bits];  // link[i] - nearest position from the right where
                      // placed a number having first |i| bits equal to the
@@ -107,7 +107,7 @@ class Flov {
   void PushBack(KeyType key) {
     if (!nodes.empty()) {
       Node newNode{key};
-      const BLink newPos = static_cast<int32_t>(nodes.size());
+      const BLink newPos = static_cast<BLink::DataType>(nodes.size());
       newNode.match[0] = newPos - 1;
 
       for (int bit = 0; bit < B; ++bit) {
@@ -161,7 +161,21 @@ class Flov {
         current = nodes[current].link[bit];
       }
     }
-    return current;
+    return IsValid(current) ? current : Size();
+  }
+
+  size_t Size() const {
+    return nodes.size();
+  }
+
+  const KeyType& operator[](size_t index) const {
+    assert(index < nodes.size());
+    return nodes[index].key;
+  }
+
+  KeyType& operator[](size_t index) {
+    assert(index < nodes.size());
+    return nodes[index].key;
   }
 
  private:
