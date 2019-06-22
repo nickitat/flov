@@ -146,7 +146,7 @@ class Flov {
           __statistics.numberOfEstablishedLinks++;
         }
       }
-      nodes.push_back(newNode);
+      nodes.push_back(std::move(newNode));
     } else {
       nodes.emplace_back(key);
     }
