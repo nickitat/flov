@@ -25,7 +25,7 @@ target_include_directories(flov_tests PRIVATE ${PROJECT_SOURCE_DIR}/include/mpl)
 # file(GENERATE OUTPUT "includes.txt" CONTENT
 # "$<TARGET_PROPERTY:nickitat_mpl,INTERFACE_INCLUDE_DIRECTORIES>\n" )
 
-target_compile_options(flov_tests PRIVATE -std=c++17)
+target_compile_options(flov_tests PRIVATE -std=c++17 -O2)
 
 # I'm currently using the following script: cmake . -Bbuild
 # -DCMAKE_CXX_COMPILER=clang++ && cmake --build build && build/flov_tests

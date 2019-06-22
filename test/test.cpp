@@ -8,6 +8,9 @@
 
 using namespace std;
 
+#define ASSERT_FALSE(cond) assert(!(cond))
+#define ASSERT_LE(lhs, rhs) assert((lhs) <= (rhs))
+
 namespace {
 struct Timer {
   using Clock = std::chrono::high_resolution_clock;
@@ -18,7 +21,7 @@ struct Timer {
   ~Timer() {
     auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
         Clock::now() - start);
-    cout << elapsed.count() << endl;
+    cout << "Elapsed time: " << elapsed.count() << " ms" << endl;
   }
 
   Clock::time_point start;
@@ -60,6 +63,9 @@ void ReportMistake(const int dsSize,
 
 void TestInsertNRandomKeysThenSearchForThem(const int N) {
   const auto keys = GenerateRandomKeys(N);
+
+  Timer timer;
+
   Flov ds;
   for (const auto& key : keys) {
     ds.PushBack(key);
@@ -74,14 +80,13 @@ void TestInsertNRandomKeysThenSearchForThem(const int N) {
     }
   }
 
+  ASSERT_FALSE(mistakesFound);
+
   constexpr auto KeyBitLen = sizeof(int) * CHAR_BIT;
-  cout << "N * KeyBitLen = " << N << " * " << KeyBitLen << " = "
-       << N * KeyBitLen << endl;
-  cout << "Mistakes " << (mistakesFound ? "were" : "were not") << " found"
-       << endl;
+  ASSERT_LE(ds.__statistics.numberOfEstablishedLinks, N * KeyBitLen);
 }
 
 int main() {
-  TestInsertNRandomKeysThenSearchForThem(123'456'7);
+  TestInsertNRandomKeysThenSearchForThem(123'456);
   return 0;
 }
