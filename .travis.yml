@@ -8,6 +8,7 @@ script:
       -DCMAKE_CXX_COMPILER=${CXX}
   - cmake --build build
   - ./build/flov_tests
+  - cppcheck ./build --force --quiet --error-exitcode=1
 
 after_success:
   - codecov
@@ -54,3 +55,4 @@ before_install:
 
 install:
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then travis_wait 60 brew install gcc@7 ; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install cppcheck ; else sudo apt-get install -qq cppcheck ; fi
