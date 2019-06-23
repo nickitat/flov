@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.com/nickitat/flov.svg?branch=master)](https://travis-ci.com/nickitat/flov)
+
 # flov
 *Dunno whether the following idea is well known or not. But I never heard it before.*
 
