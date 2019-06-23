@@ -4,9 +4,8 @@
 #include <type_traits/type_traits.hpp>
 #include <type_traits/type_utilities.hpp>
 
-#include <type_traits>
-
 #include <limits.h>  // CHAR_BIT
+#include <cassert>
 #include <iostream>
 #include <type_traits>
 #include <utility>

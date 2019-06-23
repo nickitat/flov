@@ -1,0 +1,56 @@
+language: cpp
+
+dist: trusty
+
+script:
+  - cmake .
+      -Bbuild
+      -DCMAKE_CXX_COMPILER=${CXX}
+  - cmake --build build
+  - ./build/flov_tests
+
+after_success:
+  - codecov
+
+matrix:
+  include:
+    - os: linux
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-7
+      env:
+        - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
+    
+    - os: linux
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+            - llvm-toolchain-trusty-7
+          packages:
+            - clang-7
+            # dirty hack to receive sufficiently modern standard library headers
+            - g++-7
+      env:
+        - MATRIX_EVAL="CC=clang-7 && CXX=clang++-7"
+
+    - os: osx
+      osx_image: xcode10.1
+      env:
+        - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
+    
+    - os: osx
+      osx_image: xcode10.1
+    
+    - os: osx
+      osx_image: xcode9.4
+
+before_install:
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update ; else sudo apt-get update ; fi
+    - eval "${MATRIX_EVAL}"
+
+install:
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then travis_wait 60 brew install gcc@7 ; fi
