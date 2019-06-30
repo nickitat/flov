@@ -2,7 +2,11 @@ cmake_minimum_required(VERSION 3.2)
 
 project(flov)
 
-# set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${PROJECT_SOURCE_DIR}/build/nmpl)
+set(flov_headers ${CMAKE_CURRENT_SOURCE_DIR}/flov.hpp)
+
+add_library(flov INTERFACE)
+target_sources(flov INTERFACE "$<BUILD_INTERFACE:${flov_headers}>")
+target_include_directories(flov INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
 
 include(external/DownloadProject/DownloadProject.cmake)
 download_project(PROJ
@@ -23,21 +27,34 @@ download_project(PROJ
 
 add_subdirectory(${CMAKE_BINARY_DIR}/nmpl/nickitat_mpl-src)
 
-# find_package(nickitat_mpl REQUIRED) add_library(nickitat_mpl GLOBAL IMPORTED
-# INTERFACE)
+set(additional_libs profiler nickitat_mpl)
+if(${CMAKE_SYSTEM_NAME} STREQUAL Linux)
+  set(additional_libs ${additional_libs} pthread)
+endif()
+if(NICKITAT_FLOV_WITH_BENCHMARKS)
+  set(additional_libs ${additional_libs} benchmark benchmark_main)
+endif()
 
-add_executable(flov_tests test/test.cpp)
-# add_dependencies(flov_tests nickitat_mpl)
-target_link_libraries(flov_tests nickitat_mpl)
-# target_include_directories( flov_tests PUBLIC
-# $<TARGET_PROPERTY:nickitat_mpl,INTERFACE_INCLUDE_DIRECTORIES>)
-# ${PROJECT_SOURCE_DIR}/include/mpl) target_include_directories(flov_tests
-# PRIVATE ${CMAKE_BINARY_DIR}/nmpl/nickitat_mpl-src)
+set(additional_compiler_flags
+    -std=c++17
+    -g
+    -O2
+    -fno-omit-frame-pointer
+    -fno-rtti
+    -fno-exceptions)
 
-# file(GENERATE OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/includes.txt CONTENT
-# "$<TARGET_PROPERTY:nickitat_mpl,INTERFACE_INCLUDE_DIRECTORIES>\n")
+if(NICKITAT_FLOV_WITH_TESTS)
+  add_executable(flov_tests test/test.cpp)
+  target_link_libraries(flov_tests flov ${additional_libs})
+  target_compile_options(flov_tests PRIVATE ${additional_compiler_flags})
+endif()
 
-target_compile_options(flov_tests PRIVATE -std=c++17 -O2)
+if(NICKITAT_FLOV_WITH_BENCHMARKS)
+  add_executable(flov_bench_std_uset benchmark/cmp_with_std_uset.cpp)
+  target_link_libraries(flov_bench_std_uset flov ${additional_libs})
+  target_compile_options(flov_bench_std_uset
+                         PRIVATE ${additional_compiler_flags})
+endif()
 
 # I'm currently using the following script: cmake . -Bbuild
 # -DCMAKE_CXX_COMPILER=clang++ && cmake --build build && build/flov_tests
