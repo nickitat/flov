@@ -6,9 +6,12 @@
 #include <random>
 #include <vector>
 
+#include <unordered_map>
+
 using namespace std;
 
 #define ASSERT_FALSE(cond) assert(!(cond))
+#define ASSERT_EQ(lhs, rhs) assert((lhs) == (rhs))
 #define ASSERT_LE(lhs, rhs) assert((lhs) <= (rhs))
 
 namespace {
@@ -31,9 +34,12 @@ vector<int> GenerateRandomKeys(size_t amount) {
   std::random_device rd;
   std::mt19937 g{rd()};
 
-  vector<int> keys(amount);
-  generate(keys.begin(), keys.end(), g);
-  return keys;
+  std::unordered_set<int> keys;
+  keys.reserve(amount);
+  while (keys.size() < amount) {
+    keys.insert(g());
+  }
+  return vector<int>{keys.begin(), keys.end()};
 }
 
 vector<int> GenerateRandomPermutation(size_t length) {
@@ -82,11 +88,14 @@ void TestInsertNRandomKeysThenSearchForThem(const int N) {
 
   ASSERT_FALSE(mistakesFound);
 
+  ASSERT_EQ(ds.__statistics.usedLinks.size(), N - 1);
+
   constexpr auto KeyBitLen = sizeof(int) * CHAR_BIT;
   ASSERT_LE(ds.__statistics.numberOfEstablishedLinks, N * KeyBitLen);
 }
 
 int main() {
-  TestInsertNRandomKeysThenSearchForThem(123'456);
+  for (int i = 0; i < 1000; ++i)
+    TestInsertNRandomKeysThenSearchForThem(123'456);
   return 0;
 }

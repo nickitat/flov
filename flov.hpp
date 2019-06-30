@@ -11,6 +11,8 @@
 #include <utility>
 #include <vector>
 
+#include <unordered_set>
+
 class Flov;
 
 namespace detail {
@@ -158,6 +160,7 @@ class Flov {
       if (nodes[current].key == key)
         return current;
       if (KeysDifferInBit(newNode, nodes[current], bit)) {
+        __statistics.MarkLinkAsUsed(current, nodes[current].link[bit]);
         current = nodes[current].link[bit];
       }
     }
@@ -183,7 +186,11 @@ class Flov {
 
  private:
   struct Statistics {
+    void MarkLinkAsUsed(const FLink& from, const FLink& to) {
+      usedLinks.insert(((uint64_t)from << 32) + to);
+    }
     uint64_t numberOfEstablishedLinks = 0;
+    std::unordered_set<uint64_t> usedLinks;
   } __statistics;
 
   friend void TestInsertNRandomKeysThenSearchForThem(const int);
