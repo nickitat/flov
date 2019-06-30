@@ -6,6 +6,7 @@ script:
   - cmake .
       -Bbuild
       -DCMAKE_CXX_COMPILER=${CXX}
+      -DNICKITAT_FLOV_WITH_TESTS=1
   - cmake --build build
   - ./build/flov_tests
   - cppcheck ./build --force --quiet --error-exitcode=1
