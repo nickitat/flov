@@ -1,5 +1,9 @@
 #include <flov.hpp>
 
+#include <benchmark/profiling_wrapper.hpp>
+
+#include <benchmark/benchmark.h>
+
 #include <algorithm>
 #include <chrono>
 #include <iostream>
@@ -70,11 +74,14 @@ void ReportMistake(const int dsSize,
 void TestInsertNRandomKeysThenSearchForThem(const int N) {
   const auto keys = GenerateRandomKeys(N);
 
-  Timer timer;
+  // Timer timer;
 
   Flov ds;
-  for (const auto& key : keys) {
+  ds.nodes.reserve(N);
+  for (const auto& key : keys) {    
+    // benchmark::DoNotOptimize(ds.nodes.data());
     ds.PushBack(key);
+    // benchmark::ClobberMemory();
   }
 
   // bool mistakesFound = false;
@@ -94,8 +101,10 @@ void TestInsertNRandomKeysThenSearchForThem(const int N) {
   // ASSERT_LE(ds.__statistics.numberOfEstablishedLinks, N * KeyBitLen);
 }
 
-int main() {
-  // for (int i = 0; i < 1000; ++i)
-  TestInsertNRandomKeysThenSearchForThem(123'456);
+int main() { 
+  PerfProfilingWrapper profile("insert.prof");
+  
+  for (int i = 0; i < 50; ++i)
+    TestInsertNRandomKeysThenSearchForThem(123'456);
   return 0;
 }

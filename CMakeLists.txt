@@ -28,9 +28,6 @@ download_project(PROJ
 add_subdirectory(${CMAKE_BINARY_DIR}/nmpl/nickitat_mpl-src)
 
 set(additional_libs profiler nickitat_mpl)
-if(${CMAKE_SYSTEM_NAME} STREQUAL Linux)
-  set(additional_libs ${additional_libs} pthread)
-endif()
 if(NICKITAT_FLOV_WITH_BENCHMARKS)
   set(additional_libs ${additional_libs} benchmark benchmark_main)
 endif()
@@ -42,6 +39,14 @@ set(additional_compiler_flags
     -fno-omit-frame-pointer
     -fno-rtti
     -fno-exceptions)
+
+find_package(Threads REQUIRED)
+if(THREADS_HAVE_PTHREAD_ARG)
+  set(additional_compiler_flags ${additional_compiler_flags} -pthread)
+endif()
+if(CMAKE_THREAD_LIBS_INIT)
+  set(additional_libs ${additional_libs} ${CMAKE_THREAD_LIBS_INIT})
+endif()
 
 if(NICKITAT_FLOV_WITH_TESTS)
   add_executable(flov_tests test/test.cpp)

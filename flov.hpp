@@ -11,6 +11,8 @@
 #include <utility>
 #include <vector>
 
+#include <cstring>
+
 #include <unordered_set>
 
 class Flov;
@@ -64,7 +66,8 @@ class Node {
   using BLink = BLinkT;
 
   Node(Key key) : key(key) {
-    std::fill(std::begin(link), std::end(link), FLink::NPos);
+    // std::fill(std::begin(link), std::end(link), FLink::NPos);
+    memset(link, 0xff, sizeof(link));
     // std::fill(std::begin(rlink), std::end(rlink), BLink::NPos);
     // std::fill(std::begin(match), std::end(match), BLink::NPos);
   }
@@ -113,7 +116,7 @@ class Flov {
  public:
   using SizeType = Nodes::size_type;
 
-  void PushBack(KeyType key) {
+  void __attribute__ ((noinline)) PushBack(KeyType key) {
     if (!nodes.empty()) {
       auto&& [lastNode, bit] = FindEx(key);
       assert(nodes[lastNode].key != key && "all the keys should be unique");
@@ -146,7 +149,7 @@ class Flov {
   }
 
  private:
-  std::pair<FLink, uint8_t> FindEx(KeyType key) const {
+  std::pair<FLink, uint8_t> __attribute__ ((noinline)) FindEx(KeyType key) const {
     FLink current{};
     uint8_t bit = 0;
     for (; bit < B; ++bit) {
@@ -165,7 +168,7 @@ class Flov {
 
   std::vector<Node> nodes;
 
- private:
+// private:
   struct Statistics {
     void MarkLinkAsUsed(const FLink& from, const FLink& to) {
       usedLinks.insert(((uint64_t)from << 32) + to);
