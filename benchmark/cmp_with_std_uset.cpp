@@ -1,8 +1,11 @@
 #include <flov.hpp>
 
+#include <benchmark/profiling_wrapper.hpp>
+
 #include <benchmark/benchmark.h>
 
 #include <random>
+#include <set>
 #include <unordered_set>
 #include <vector>
 
@@ -16,6 +19,14 @@ struct Adaptor<Flov> {
   }
 
   Flov ds;
+};
+
+template <>
+struct Adaptor<std::set<int>> {
+  void Insert(int key) {
+    ds.insert(key);
+  }
+  std::set<int> ds;
 };
 
 template <>
@@ -43,6 +54,8 @@ template <class Container, uint32_t N>
 void BM_InsertNRandomKeys(benchmark::State& state) {
   const auto keys = GenerateRandomKeys(N);
 
+  // PerfProfilingWrapper("insert.prof");
+
   for (auto _ : state) {
     Container container;
     for (const auto& key : keys) {
@@ -54,4 +67,5 @@ void BM_InsertNRandomKeys(benchmark::State& state) {
 constexpr uint32_t N = 123'456;
 
 BENCHMARK_TEMPLATE(BM_InsertNRandomKeys, Adaptor<Flov>, N);
+BENCHMARK_TEMPLATE(BM_InsertNRandomKeys, Adaptor<std::set<int>>, N);
 BENCHMARK_TEMPLATE(BM_InsertNRandomKeys, Adaptor<std::unordered_set<int>>, N);
