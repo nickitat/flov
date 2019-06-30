@@ -86,18 +86,18 @@ class Node {
                       // bits 0...|i| of |key|
 };
 
-template <class Node>
-inline constexpr bool KeysDifferInBit(const Node& lhs,
-                                      const Node& rhs,
+template <class KeyType>
+inline constexpr bool KeysDifferInBit(const KeyType lhs,
+                                      const KeyType rhs,
                                       uint8_t bit) {
-  return ((lhs.key >> bit) & 1) != ((rhs.key >> bit) & 1);
+  return ((lhs >> bit) & 1) != ((rhs >> bit) & 1);
 }
 
-template <class Node>
-inline constexpr bool KeysMatchInBit(const Node& lhs,
-                                     const Node& rhs,
+template <class KeyType>
+inline constexpr bool KeysMatchInBit(const KeyType lhs,
+                                     const KeyType rhs,
                                      uint8_t bit) {
-  return ((lhs.key >> bit) & 1) == ((rhs.key >> bit) & 1);
+  return ((lhs >> bit) & 1) == ((rhs >> bit) & 1);
 }
 
 }  // namespace detail
@@ -115,52 +115,17 @@ class Flov {
 
   void PushBack(KeyType key) {
     if (!nodes.empty()) {
-      // Node newNode{key};
-      // const BLink newPos{static_cast<BLink::DataType>(nodes.size())};
-
-      // for (uint8_t bit = 0; bit < B; ++bit) {
-      //   const auto matchesInAllLowerBits =
-      //       bit ? newNode.match[bit - 1] : BLink{newPos - 1};
-      //   if (!IsValid(matchesInAllLowerBits))
-      //     continue;
-
-      //   const auto differsInCurrentBit =
-      //       KeysDifferInBit(newNode, nodes[matchesInAllLowerBits], bit)
-      //           ? matchesInAllLowerBits
-      //           : nodes[matchesInAllLowerBits].rlink[bit];
-
-      //   if (IsValid(differsInCurrentBit)) {
-      //     newNode.rlink[bit] = differsInCurrentBit;
-      //   }
-
-      //   newNode.match[bit] =
-      //       KeysMatchInBit(newNode, nodes[matchesInAllLowerBits], bit)
-      //           ? matchesInAllLowerBits
-      //           : nodes[matchesInAllLowerBits].rlink[bit];
-
-      //   auto currentToBeLinkedWithNewNode = differsInCurrentBit;
-      //   while (IsValid(currentToBeLinkedWithNewNode) &&
-      //          !IsValid(nodes[currentToBeLinkedWithNewNode].link[bit])) {
-      //     nodes[currentToBeLinkedWithNewNode].link[bit] = newPos;
-      //     currentToBeLinkedWithNewNode =
-      //         nodes[currentToBeLinkedWithNewNode].match[bit];
-      //     __statistics.numberOfEstablishedLinks++;
-      //   }
-      // }
-      // nodes.push_back(std::move(newNode));
-      auto&& [lastNode, bit] = FindImpl(key);
+      auto&& [lastNode, bit] = FindEx(key);
       assert(nodes[lastNode].key != key && "all the keys should be unique");
       assert(bit < B);
       const auto newPos = nodes.size();
       nodes[lastNode].link[bit] = static_cast<BLink::DataType>(newPos);
-      nodes.emplace_back(key);
-    } else {
-      nodes.emplace_back(key);
     }
+    nodes.emplace_back(key);
   }
 
   SizeType Find(KeyType key) const {
-    auto&& [lastNode, bit] = FindImpl(key);
+    auto&& [lastNode, bit] = FindEx(key);
     assert(IsValid(lastNode));
     return nodes[lastNode].key == key ? static_cast<SizeType>(lastNode)
                                       : Size();
@@ -181,17 +146,16 @@ class Flov {
   }
 
  private:
-  std::pair<FLink, uint8_t> FindImpl(KeyType key) const {
-    Node newNode{key};
+  std::pair<FLink, uint8_t> FindEx(KeyType key) const {
     FLink current{};
     uint8_t bit = 0;
     for (; bit < B; ++bit) {
       if (nodes[current].key == key)
         return {current, bit};
-      if (KeysDifferInBit(newNode, nodes[current], bit)) {
+      if (detail::KeysDifferInBit(key, nodes[current].key, bit)) {
         if (IsValid(nodes[current].link[bit])) {
           current = nodes[current].link[bit];
-          __statistics.MarkLinkAsUsed(current, nodes[current].link[bit]);
+          // __statistics.MarkLinkAsUsed(current, nodes[current].link[bit]);
         } else
           return {current, bit};
       }
