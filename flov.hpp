@@ -121,8 +121,7 @@ class Flov {
       auto&& [lastNode, bit] = FindEx(key);
       assert(nodes[lastNode].key != key && "all the keys should be unique");
       assert(bit < B);
-      const auto newPos = nodes.size();
-      nodes[lastNode].link[bit] = static_cast<BLink::DataType>(newPos);
+      nodes[lastNode].link[bit] = static_cast<BLink::DataType>(nodes.size());
     }
     nodes.emplace_back(key);
   }

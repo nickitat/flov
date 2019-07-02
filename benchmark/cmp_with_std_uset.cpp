@@ -9,6 +9,8 @@
 #include <unordered_set>
 #include <vector>
 
+namespace {
+
 template <class Container>
 struct Adaptor;
 
@@ -50,8 +52,11 @@ std::vector<int> GenerateRandomKeys(size_t amount) {
   return std::vector<int>{keys.begin(), keys.end()};
 }
 
-template <class Container, uint32_t N>
+}  // namespace
+
+template <class Container>
 void BM_InsertNRandomKeys(benchmark::State& state) {
+  const auto N = state.range(0);
   const auto keys = GenerateRandomKeys(N);
 
   // PerfProfilingWrapper("insert.prof");
@@ -64,8 +69,8 @@ void BM_InsertNRandomKeys(benchmark::State& state) {
   }
 }
 
-constexpr uint32_t N = 123'456;
-
-BENCHMARK_TEMPLATE(BM_InsertNRandomKeys, Adaptor<Flov>, N);
-BENCHMARK_TEMPLATE(BM_InsertNRandomKeys, Adaptor<std::set<int>>, N);
-BENCHMARK_TEMPLATE(BM_InsertNRandomKeys, Adaptor<std::unordered_set<int>>, N);
+BENCHMARK_TEMPLATE(BM_InsertNRandomKeys, Adaptor<Flov>)->Range(16, 1 << 20);
+BENCHMARK_TEMPLATE(BM_InsertNRandomKeys, Adaptor<std::set<int>>, N)
+    ->Range(16, 1 << 20);
+BENCHMARK_TEMPLATE(BM_InsertNRandomKeys, Adaptor<std::unordered_set<int>>)
+    ->Range(16, 1 << 20);

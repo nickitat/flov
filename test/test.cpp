@@ -1,9 +1,5 @@
 #include <flov.hpp>
 
-#include <benchmark/profiling_wrapper.hpp>
-
-#include <benchmark/benchmark.h>
-
 #include <algorithm>
 #include <chrono>
 #include <iostream>
@@ -19,22 +15,7 @@ using namespace std;
 #define ASSERT_LE(lhs, rhs) assert((lhs) <= (rhs))
 
 namespace {
-struct Timer {
-  using Clock = std::chrono::high_resolution_clock;
-
-  Timer() : start(Clock::now()) {
-  }
-
-  ~Timer() {
-    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
-        Clock::now() - start);
-    cout << "Elapsed time: " << elapsed.count() << " ms" << endl;
-  }
-
-  Clock::time_point start;
-};
-
-vector<int> GenerateRandomKeys(size_t amount) {
+vector<int> GenerateUniqueRandomKeys(size_t amount) {
   std::random_device rd;
   std::mt19937 g{rd()};
 
@@ -72,39 +53,33 @@ void ReportMistake(const int dsSize,
 }  // namespace
 
 void TestInsertNRandomKeysThenSearchForThem(const int N) {
-  const auto keys = GenerateRandomKeys(N);
-
-  // Timer timer;
+  const auto keys = GenerateUniqueRandomKeys(N);
 
   Flov ds;
   ds.nodes.reserve(N);
-  for (const auto& key : keys) {    
-    // benchmark::DoNotOptimize(ds.nodes.data());
+  for (const auto& key : keys) {
     ds.PushBack(key);
-    // benchmark::ClobberMemory();
   }
 
-  // bool mistakesFound = false;
-  // for (auto index : GenerateRandomPermutation(N)) {
-  //   const auto f = ds.Find(keys[index]);
-  //   if (f >= ds.Size() || ds[f] != keys[index]) {
-  //     mistakesFound = true;
-  //     ReportMistake(ds.Size(), keys[index], index, f, ds[f]);
-  //   }
-  // }
+  bool mistakesFound = false;
+  for (auto index : GenerateRandomPermutation(N)) {
+    const auto f = ds.Find(keys[index]);
+    if (f >= ds.Size() || ds[f] != keys[index]) {
+      mistakesFound = true;
+      ReportMistake(ds.Size(), keys[index], index, f, ds[f]);
+    }
+  }
 
-  // ASSERT_FALSE(mistakesFound);
+  ASSERT_FALSE(mistakesFound);
 
-  // ASSERT_EQ(ds.__statistics.usedLinks.size(), N - 1);
+  ASSERT_EQ(ds.__statistics.usedLinks.size(), N - 1);
 
-  // constexpr auto KeyBitLen = sizeof(int) * CHAR_BIT;
-  // ASSERT_LE(ds.__statistics.numberOfEstablishedLinks, N * KeyBitLen);
+  constexpr auto KeyBitLen = sizeof(int) * CHAR_BIT;
+  ASSERT_LE(ds.__statistics.numberOfEstablishedLinks, N * KeyBitLen);
 }
 
-int main() { 
-  PerfProfilingWrapper profile("insert.prof");
-  
-  for (int i = 0; i < 50; ++i)
+int main() {
+  for (int i = 0; i < 100; ++i)
     TestInsertNRandomKeysThenSearchForThem(123'456);
   return 0;
 }

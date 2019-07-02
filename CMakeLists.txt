@@ -32,13 +32,16 @@ if(NICKITAT_FLOV_WITH_BENCHMARKS)
   set(additional_libs ${additional_libs} benchmark benchmark_main)
 endif()
 
-set(additional_compiler_flags
-    -std=c++17
-    -g
-    -O2
-    -fno-omit-frame-pointer
-    -fno-rtti
-    -fno-exceptions)
+set(additional_compiler_flags -std=c++17 -O2)
+
+if(NICKITAT_FLOV_WITH_BENCHMARKS)
+  set(additional_compiler_flags
+      ${additional_compiler_flags}
+      -g
+      -fno-omit-frame-pointer
+      -fno-rtti
+      -fno-exceptions)
+endif()
 
 find_package(Threads REQUIRED)
 if(THREADS_HAVE_PTHREAD_ARG)
