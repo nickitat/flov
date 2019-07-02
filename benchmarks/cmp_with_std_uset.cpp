@@ -1,6 +1,6 @@
 #include <flov.hpp>
 
-#include <benchmark/profiling_wrapper.hpp>
+#include <benchmarks/profiling_wrapper.hpp>
 
 #include <benchmark/benchmark.h>
 
@@ -15,12 +15,12 @@ template <class Container>
 struct Adaptor;
 
 template <>
-struct Adaptor<Flov> {
+struct Adaptor<flov::Flov> {
   void Insert(int key) {
     ds.PushBack(key);
   }
 
-  Flov ds;
+  flov::Flov ds;
 };
 
 template <>
@@ -59,7 +59,7 @@ void BM_InsertNRandomKeys(benchmark::State& state) {
   const auto N = state.range(0);
   const auto keys = GenerateRandomKeys(N);
 
-  // PerfProfilingWrapper("insert.prof");
+  // flov::bench::PerfProfilingWrapper("insert.prof");
 
   for (auto _ : state) {
     Container container;
@@ -69,8 +69,9 @@ void BM_InsertNRandomKeys(benchmark::State& state) {
   }
 }
 
-BENCHMARK_TEMPLATE(BM_InsertNRandomKeys, Adaptor<Flov>)->Range(16, 1 << 20);
-BENCHMARK_TEMPLATE(BM_InsertNRandomKeys, Adaptor<std::set<int>>, N)
+BENCHMARK_TEMPLATE(BM_InsertNRandomKeys, Adaptor<flov::Flov>)
+    ->Range(16, 1 << 20);
+BENCHMARK_TEMPLATE(BM_InsertNRandomKeys, Adaptor<std::set<int>>)
     ->Range(16, 1 << 20);
 BENCHMARK_TEMPLATE(BM_InsertNRandomKeys, Adaptor<std::unordered_set<int>>)
     ->Range(16, 1 << 20);

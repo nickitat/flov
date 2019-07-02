@@ -55,7 +55,7 @@ void ReportMistake(const int dsSize,
 void TestInsertNRandomKeysThenSearchForThem(const int N) {
   const auto keys = GenerateUniqueRandomKeys(N);
 
-  Flov ds;
+  flov::Flov ds;
   ds.nodes.reserve(N);
   for (const auto& key : keys) {
     ds.PushBack(key);

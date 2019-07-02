@@ -2,6 +2,9 @@
 
 #include <gperftools/profiler.h>
 
+namespace flov {
+namespace bench {
+
 struct PerfProfilingWrapper {
   PerfProfilingWrapper(const char* profileName) {
     ProfilerStart(profileName);
@@ -12,3 +15,5 @@ struct PerfProfilingWrapper {
   }
 };
 
+}  // namespace bench
+}  // namespace flov

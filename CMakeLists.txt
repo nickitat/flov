@@ -33,7 +33,6 @@ if(NICKITAT_FLOV_WITH_BENCHMARKS)
 endif()
 
 set(additional_compiler_flags -std=c++17 -O2)
-
 if(NICKITAT_FLOV_WITH_BENCHMARKS)
   set(additional_compiler_flags
       ${additional_compiler_flags}
@@ -58,7 +57,7 @@ if(NICKITAT_FLOV_WITH_TESTS)
 endif()
 
 if(NICKITAT_FLOV_WITH_BENCHMARKS)
-  add_executable(flov_bench_std_uset benchmark/cmp_with_std_uset.cpp)
+  add_executable(flov_bench_std_uset benchmarks/cmp_with_std_uset.cpp)
   target_link_libraries(flov_bench_std_uset flov ${additional_libs})
   target_compile_options(flov_bench_std_uset
                          PRIVATE ${additional_compiler_flags})

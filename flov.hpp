@@ -1,60 +1,22 @@
 #pragma once
 
-#include <constructible_from/constructible_from.hpp>
-#include <type_traits/type_traits.hpp>
-#include <type_traits/type_utilities.hpp>
+#include <detail/links.hpp>
+#include <detail/macros.hpp>
 
 #include <limits.h>  // CHAR_BIT
 #include <cassert>
+#include <cstring>
 #include <iostream>
 #include <type_traits>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
-#include <cstring>
+void TestInsertNRandomKeysThenSearchForThem(const int);
 
-#include <unordered_set>
-
-class Flov;
+namespace flov {
 
 namespace detail {
-
-namespace links {
-using namespace constructible_from;
-
-template <class From>
-using NonnarrowingConvertibleToInt =
-    type_traits::IsNonnarrowingConvertible<From, uint32_t>;
-
-struct FLink
-    : MakeUnique<
-          class ForwardLink,
-          ConstructibleFrom<uint32_t,
-                            Signature<NonnarrowingConvertibleToInt>>::Type> {
-  using MakeUnique::MakeUnique;
-  static constexpr DataType NPos = static_cast<DataType>(-1);
-};
-
-bool IsValid(FLink link) {
-  return link != FLink::NPos;
-}
-
-struct BLink
-    : MakeUnique<
-          class BackwardLink,
-          ConstructibleFrom<uint32_t,
-                            Signature<NonnarrowingConvertibleToInt>>::Type> {
-  using MakeUnique::MakeUnique;
-  static constexpr DataType NPos = static_cast<DataType>(-1);
-};
-
-bool IsValid(BLink link) {
-  return link != BLink::NPos;
-}
-
-static_assert(!std::is_same_v<FLink, BLink>,
-              "Two link types should be different types.");
-}  // namespace links
 
 template <class Key,
           uint8_t Bits,
@@ -66,8 +28,7 @@ class Node {
   using BLink = BLinkT;
 
   Node(Key key) : key(key) {
-    // std::fill(std::begin(link), std::end(link), FLink::NPos);
-    memset(link, 0xff, sizeof(link));
+    std::fill(std::begin(link), std::end(link), FLink::NPos);
     // std::fill(std::begin(rlink), std::end(rlink), BLink::NPos);
     // std::fill(std::begin(match), std::end(match), BLink::NPos);
   }
@@ -79,27 +40,23 @@ class Node {
                      // first |i| bits of |key| and whose |i|-th bit
                      // differs from the |i|-th bit of |key|
 
-  BLink rlink[Bits];  // rlink[i] - nearest position from the left where
-                      // placed a number having first |i| bits equal to the
-                      // first |i| bits of |key| and whose |i|-th bit
-                      // differs from the |i|-th bit of |key|
+  // BLink rlink[Bits];  // rlink[i] - nearest position from the left where
+  // placed a number having first |i| bits equal to the
+  // first |i| bits of |key| and whose |i|-th bit
+  // differs from the |i|-th bit of |key|
 
-  BLink match[Bits];  // match[i] - nearest position from the left where
-                      // placed a number having all bits 0...|i| equal to the
-                      // bits 0...|i| of |key|
+  // BLink match[Bits];  // match[i] - nearest position from the left where
+  // placed a number having all bits 0...|i| equal to the
+  // bits 0...|i| of |key|
 };
 
 template <class KeyType>
-inline constexpr bool KeysDifferInBit(const KeyType lhs,
-                                      const KeyType rhs,
-                                      uint8_t bit) {
+inline bool KeysDifferInBit(const KeyType lhs, const KeyType rhs, uint8_t bit) {
   return ((lhs >> bit) & 1) != ((rhs >> bit) & 1);
 }
 
 template <class KeyType>
-inline constexpr bool KeysMatchInBit(const KeyType lhs,
-                                     const KeyType rhs,
-                                     uint8_t bit) {
+inline bool KeysMatchInBit(const KeyType lhs, const KeyType rhs, uint8_t bit) {
   return ((lhs >> bit) & 1) == ((rhs >> bit) & 1);
 }
 
@@ -116,7 +73,7 @@ class Flov {
  public:
   using SizeType = Nodes::size_type;
 
-  void __attribute__ ((noinline)) PushBack(KeyType key) {
+  void FLOV_NOINLINE PushBack(KeyType key) {
     if (!nodes.empty()) {
       auto&& [lastNode, bit] = FindEx(key);
       assert(nodes[lastNode].key != key && "all the keys should be unique");
@@ -128,7 +85,7 @@ class Flov {
 
   SizeType Find(KeyType key) const {
     auto&& [lastNode, bit] = FindEx(key);
-    assert(IsValid(lastNode));
+    assert(lastNode < Size());
     return nodes[lastNode].key == key ? static_cast<SizeType>(lastNode)
                                       : Size();
   }
@@ -148,7 +105,7 @@ class Flov {
   }
 
  private:
-  std::pair<FLink, uint8_t> __attribute__ ((noinline)) FindEx(KeyType key) const {
+  std::pair<FLink::DataType, uint8_t> FLOV_NOINLINE FindEx(KeyType key) const {
     FLink current{};
     uint8_t bit = 0;
     for (; bit < B; ++bit) {
@@ -167,7 +124,7 @@ class Flov {
 
   std::vector<Node> nodes;
 
-// private:
+ private:
   struct Statistics {
     void MarkLinkAsUsed(const FLink& from, const FLink& to) {
       usedLinks.insert(((uint64_t)from << 32) + to);
@@ -177,5 +134,7 @@ class Flov {
   };
   mutable Statistics __statistics;
 
-  friend void TestInsertNRandomKeysThenSearchForThem(const int);
+  friend void ::TestInsertNRandomKeysThenSearchForThem(const int);
 };
+
+}  // namespace flov
