@@ -36,13 +36,6 @@ Time complexity: <img src="docs/O(KeyBitLen).png" alt="alt text" height=20>.
 
 Is a bit harder. When we adding a new key we also need to correctly update the links of those preceiding nodes for which the new node is "the nearest node (from the right) with a key having exactly the same first...".
 
-But there are only
-<img src="docs/O(NKeyBitLen).png" alt="alt text" height=20>
-links in total. It turns out that we can guarantee that each link will be assigned only once (and few other technicalities). In short, we can do `Insert` in amortized
-<img src="docs/O(KeyBitLen).png" alt="alt text" height=20>
-time.<br/>
-Please refer to the implementation if you are interested in details.
-
 ### Delete (the most recently inserted)
 
 TODO. I'm pretty confident that we are able to do it with the same amortized complexity as `Insert`.
