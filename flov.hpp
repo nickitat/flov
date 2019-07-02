@@ -67,27 +67,29 @@ class Flov {
   static constexpr uint32_t B = CHAR_BIT * sizeof(KeyType);
   using Node = detail::Node<KeyType, B>;
   using FLink = Node::FLink;
-  using BLink = Node::BLink;
+  // using BLink = Node::BLink;
   using Nodes = std::vector<Node>;
 
  public:
-  using SizeType = Nodes::size_type;
+  using SizeType = std::common_type_t<FLink::DataType, Nodes::size_type>;
 
   void FLOV_NOINLINE PushBack(KeyType key) {
     if (!nodes.empty()) {
-      auto&& [lastNode, bit] = FindEx(key);
-      assert(nodes[lastNode].key != key && "all the keys should be unique");
-      assert(bit < B);
-      nodes[lastNode].link[bit] = static_cast<BLink::DataType>(nodes.size());
+      auto&& [nodeWithLongestMatchingPrefix, bit] = FindEx(key);
+      FLOV_ASSERT(nodeWithLongestMatchingPrefix < Size());
+      FLOV_ASSERT(nodes[nodeWithLongestMatchingPrefix].key != key);
+      FLOV_ASSERT(bit < B);
+      nodes[nodeWithLongestMatchingPrefix].link[bit] =
+          static_cast<FLink::DataType>(Size());
     }
     nodes.emplace_back(key);
   }
 
   SizeType Find(KeyType key) const {
-    auto&& [lastNode, bit] = FindEx(key);
-    assert(lastNode < Size());
-    return nodes[lastNode].key == key ? static_cast<SizeType>(lastNode)
-                                      : Size();
+    auto&& [nodeWithLongestMatchingPrefix, bit] = FindEx(key);
+    FLOV_ASSERT(nodeWithLongestMatchingPrefix < Size() && bit <= B);
+    const bool keysMatch = nodes[nodeWithLongestMatchingPrefix].key == key;
+    return keysMatch ? nodeWithLongestMatchingPrefix : Size();
   }
 
   SizeType Size() const {
@@ -95,12 +97,12 @@ class Flov {
   }
 
   const KeyType& operator[](SizeType index) const {
-    assert(index < nodes.size());
+    FLOV_ASSERT(index < nodes.size());
     return nodes[index].key;
   }
 
   KeyType& operator[](SizeType index) {
-    assert(index < nodes.size());
+    FLOV_ASSERT(index < nodes.size());
     return nodes[index].key;
   }
 
@@ -114,7 +116,8 @@ class Flov {
       if (detail::KeysDifferInBit(key, nodes[current].key, bit)) {
         if (IsValid(nodes[current].link[bit])) {
           current = nodes[current].link[bit];
-          // __statistics.MarkLinkAsUsed(current, nodes[current].link[bit]);
+          FLOV_DEBUG_INFO(
+              __statistics.MarkLinkAsUsed(current, nodes[current].link[bit]));
         } else
           return {current, bit};
       }

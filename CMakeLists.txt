@@ -53,7 +53,7 @@ endif()
 if(NICKITAT_FLOV_WITH_TESTS)
   add_executable(flov_tests test/test.cpp)
   target_link_libraries(flov_tests flov ${additional_libs})
-  target_compile_options(flov_tests PRIVATE ${additional_compiler_flags})
+  target_compile_options(flov_tests PRIVATE ${additional_compiler_flags} -DFLOV_WITH_DEBUG_INFO)
 endif()
 
 if(NICKITAT_FLOV_WITH_BENCHMARKS)
