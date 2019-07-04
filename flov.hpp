@@ -109,20 +109,18 @@ class Flov {
  private:
   std::pair<FLink::DataType, uint8_t> FLOV_NOINLINE FindEx(KeyType key) const {
     FLink current{};
-    uint8_t bit = 0;
-    for (; bit < B; ++bit) {
+    while (true) {
       if (nodes[current].key == key)
+        return {current, B};
+      const uint8_t bit = ffs(key ^ nodes[current].key) - 1;
+      if (IsValid(nodes[current].link[bit])) {
+        current = nodes[current].link[bit];
+        FLOV_DEBUG_INFO(
+            __statistics.MarkLinkAsUsed(current, nodes[current].link[bit]));
+      } else {
         return {current, bit};
-      if (detail::KeysDifferInBit(key, nodes[current].key, bit)) {
-        if (IsValid(nodes[current].link[bit])) {
-          current = nodes[current].link[bit];
-          FLOV_DEBUG_INFO(
-              __statistics.MarkLinkAsUsed(current, nodes[current].link[bit]));
-        } else
-          return {current, bit};
       }
     }
-    return {current, bit};
   }
 
   std::vector<Node> nodes;
