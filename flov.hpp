@@ -18,27 +18,32 @@ namespace flov {
 
 namespace detail {
 
-template <class Key,
-          uint8_t Bits,
-          class FLinkT = links::FLink,
-          class BLinkT = links::BLink>
+template <class Key, uint8_t Bits, class FLinkT = links::FLink>
+// class BLinkT = links::BLink>
 class Node {
  public:
   using FLink = FLinkT;
-  using BLink = BLinkT;
+  // using BLink = BLinkT;
+
+  struct Link {
+    uint8_t bit;
+    FLink link;
+  };
 
   Node(Key key) : key(key) {
-    std::fill(std::begin(link), std::end(link), FLink::NPos);
+    // std::fill(std::begin(link), std::end(link), FLink::NPos);
     // std::fill(std::begin(rlink), std::end(rlink), BLink::NPos);
     // std::fill(std::begin(match), std::end(match), BLink::NPos);
   }
 
   Key key;  // the key stored
 
-  FLink link[Bits];  // link[i] - nearest position from the right where
-                     // placed a number having first |i| bits equal to the
-                     // first |i| bits of |key| and whose |i|-th bit
-                     // differs from the |i|-th bit of |key|
+  std::vector<Link> links;
+
+  // FLink link[Bits];  // link[i] - nearest position from the right where
+  // placed a number having first |i| bits equal to the
+  // first |i| bits of |key| and whose |i|-th bit
+  // differs from the |i|-th bit of |key|
 
   // BLink rlink[Bits];  // rlink[i] - nearest position from the left where
   // placed a number having first |i| bits equal to the
@@ -79,8 +84,8 @@ class Flov {
       FLOV_ASSERT(nodeWithLongestMatchingPrefix < Size());
       FLOV_ASSERT(nodes[nodeWithLongestMatchingPrefix].key != key);
       FLOV_ASSERT(bit < B);
-      nodes[nodeWithLongestMatchingPrefix].link[bit] =
-          static_cast<FLink::DataType>(Size());
+      nodes[nodeWithLongestMatchingPrefix].links.push_back(
+          {bit, static_cast<FLink::DataType>(Size())});
     }
     nodes.emplace_back(key);
   }
@@ -107,22 +112,40 @@ class Flov {
   }
 
  private:
-  std::pair<FLink::DataType, uint8_t> FLOV_NOINLINE FindEx(KeyType key) const {
+  // node with longest matching prefix; first bit where they differ
+  std::pair<FLink, uint8_t> FLOV_NOINLINE FindEx(KeyType key) const {
     FLink current{};
-    uint8_t bit = 0;
-    for (; bit < B; ++bit) {
-      if (nodes[current].key == key)
-        return {current, bit};
-      if (detail::KeysDifferInBit(key, nodes[current].key, bit)) {
-        if (IsValid(nodes[current].link[bit])) {
-          current = nodes[current].link[bit];
-          FLOV_DEBUG_INFO(
-              __statistics.MarkLinkAsUsed(current, nodes[current].link[bit]));
-        } else
-          return {current, bit};
+    while (true) {
+      if (key == nodes[current].key)
+        return {current, B};
+      const uint8_t bit = ffs(key ^ nodes[current].key) - 1;
+      FLOV_ASSERT(bit < B);
+      // std::cout << current << " " << key << " " << nodes[current].key << " "
+      // << (uint32_t)bit << std::endl;
+      bool found = false;
+      for (auto& link : nodes[current].links) {
+        if (link.bit == bit) {
+          current = link.link;
+          found = true;
+          break;
+        }
       }
+      if (found)
+        continue;
+      return {current, bit};
+      // maybe here we can do smth like if (link[i].bit > link[i+1].bit)
+      // swap(link[i], link[i+1]);
     }
-    return {current, bit};
+
+    // if (detail::KeysDifferInBit(key, nodes[current].key, bit)) {
+    //   if (IsValid(nodes[current].link[bit])) {
+    //     current = nodes[current].link[bit];
+    //     FLOV_DEBUG_INFO(
+    //         __statistics.MarkLinkAsUsed(current,
+    //         nodes[current].link[bit]));
+    //   } else
+    //     break;
+    // }
   }
 
   std::vector<Node> nodes;
@@ -138,6 +161,6 @@ class Flov {
   mutable Statistics __statistics;
 
   friend void ::TestInsertNRandomKeysThenSearchForThem(const int);
-};
+};  // namespace flov
 
 }  // namespace flov
