@@ -79,7 +79,7 @@ void TestInsertNRandomKeysThenSearchForThem(const int N) {
 }
 
 int main() {
-  // for (int i = 0; i < 100; ++i)
+  for (int i = 0; i < 10; ++i)
     TestInsertNRandomKeysThenSearchForThem(123'456);
   return 0;
 }
