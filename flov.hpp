@@ -38,6 +38,7 @@ class Node {
 
   Key key;  // the key stored
 
+  Key linksMask = 0;
   std::vector<Link> links;
 
   // FLink link[Bits];  // link[i] - nearest position from the right where
@@ -84,6 +85,7 @@ class Flov {
       FLOV_ASSERT(nodeWithLongestMatchingPrefix < Size());
       FLOV_ASSERT(nodes[nodeWithLongestMatchingPrefix].key != key);
       FLOV_ASSERT(bit < B);
+      nodes[nodeWithLongestMatchingPrefix].linksMask |= (KeyType)1 << bit;
       auto& links = nodes[nodeWithLongestMatchingPrefix].links;
       links.push_back({bit, static_cast<FLink::DataType>(Size())});
       for (size_t i = links.size() - 1; i > 0; --i) {
@@ -129,21 +131,23 @@ class Flov {
     while (true) {
       if (key == nodes[current].key)
         return {current, B};
-      const uint8_t bit = ffs(key ^ nodes[current].key) - 1;
+      const uint8_t bit = __builtin_ctz(key ^ nodes[current].key);
       FLOV_ASSERT(bit < B);
-      // std::cout << current << " " << key << " " << nodes[current].key << " "
-      // << (uint32_t)bit << std::endl;
-      bool found = false;
-      for (auto& link : nodes[current].links) {
-        if (link.bit == bit) {
-          current = link.link;
-          found = true;
-          break;
-        }
+      if (nodes[current].linksMask & ((KeyType)1 << bit)) {
+        const auto mask = ((KeyType)1 << bit) - 1;
+        const auto pos = __builtin_popcount(nodes[current].linksMask & mask);
+        FLOV_ASSERT(nodes[current].links[pos].bit == bit);
+        current = nodes[current].links[pos].link;
+        // for (auto& link : nodes[current].links) {
+        //   if (link.bit == bit) {
+        //     current = link.link;
+        //     break;
+        //   }
+        // }
+
+      } else {
+        return {current, bit};
       }
-      if (found)
-        continue;
-      return {current, bit};
       // maybe here we can do smth like if (link[i].bit > link[i+1].bit)
       // swap(link[i], link[i+1]);
     }
