@@ -84,8 +84,19 @@ class Flov {
       FLOV_ASSERT(nodeWithLongestMatchingPrefix < Size());
       FLOV_ASSERT(nodes[nodeWithLongestMatchingPrefix].key != key);
       FLOV_ASSERT(bit < B);
-      nodes[nodeWithLongestMatchingPrefix].links.push_back(
-          {bit, static_cast<FLink::DataType>(Size())});
+      auto& links = nodes[nodeWithLongestMatchingPrefix].links;
+      links.push_back({bit, static_cast<FLink::DataType>(Size())});
+      for (size_t i = links.size() - 1; i > 0; --i) {
+        if (links[i].bit < links[i - 1].bit) {
+          using std::swap;
+          swap(links[i], links[i - 1]);
+        } else {
+          break;
+        }
+      }
+      FLOV_ASSERT(std::is_sorted(
+          links.begin(), links.end(),
+          [](auto& lhs, auto& rhs) { return lhs.bit < rhs.bit; }));
     }
     nodes.emplace_back(key);
   }
