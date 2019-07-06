@@ -79,6 +79,17 @@ inline bool KeysMatchInBit(const KeyType lhs,
 
 }  // namespace detail
 
+static const unsigned char BitsSetTable256[256] = {
+#define B2(n) n, n + 1, n + 1, n + 2
+#define B4(n) B2(n), B2(n + 1), B2(n + 1), B2(n + 2)
+#define B6(n) B4(n), B4(n + 1), B4(n + 1), B4(n + 2)
+    B6(0), B6(1), B6(1), B6(2)};
+
+unsigned int foo(unsigned int v) {
+  return BitsSetTable256[v & 0xff] + BitsSetTable256[(v >> 8) & 0xff] +
+         BitsSetTable256[(v >> 16) & 0xff] + BitsSetTable256[v >> 24];
+}
+
 template <class KeyType = int>
 class Flov {
   static constexpr uint32_t B = CHAR_BIT * sizeof(KeyType);
@@ -89,6 +100,14 @@ class Flov {
 
  public:
   using SizeType = typename Position::DataType;
+
+  Flov() {
+    // To initially generate the table algorithmically:
+    // BitsSetTable256[0] = 0;
+    // for (int i = 0; i < 256; i++) {
+    //   BitsSetTable256[i] = (i & 1) + BitsSetTable256[i / 2];
+    // }
+  }
 
   void FLOV_NOINLINE PushBack(KeyType key) {
     if (!nodes.empty()) {
@@ -139,8 +158,7 @@ class Flov {
           const auto mask = (one << firstMismatchingBit) - 1;
           // index of the link for |firstMismatchingBit| == (how many links are
           // there for smaller bits)
-          const auto index =
-              __builtin_popcount(nodes[current].linksMask & mask);
+          const auto index = foo(nodes[current].linksMask & mask);
           FLOV_ASSERT(index < nodes[current].links.size());
           FLOV_ASSERT(nodes[current].links[index].bit == firstMismatchingBit);
           current = nodes[current].links[index].to;
