@@ -16,34 +16,11 @@ template <class From>
 using NonnarrowingConvertibleToInt =
     type_traits::IsNonnarrowingConvertible<From, uint32_t>;
 
-struct FLink
-    : cf::MakeUnique<class ForwardLink,
-                     cf::ConstructibleFrom<
-                         uint32_t,
-                         cf::Signature<NonnarrowingConvertibleToInt>>::Type> {
-  using MakeUnique::MakeUnique;
-  static constexpr DataType NPos = static_cast<DataType>(-1);
-};
+using Position = cf::MakeUnique<
+    class PositionTag,
+    cf::ConstructibleFrom<uint32_t,
+                          cf::Signature<NonnarrowingConvertibleToInt>>::Type>;
 
-bool IsValid(FLink link) {
-  return link != FLink::NPos;
-}
-
-struct BLink
-    : cf::MakeUnique<class BackwardLink,
-                     cf::ConstructibleFrom<
-                         uint32_t,
-                         cf::Signature<NonnarrowingConvertibleToInt>>::Type> {
-  using MakeUnique::MakeUnique;
-  static constexpr DataType NPos = static_cast<DataType>(-1);
-};
-
-bool IsValid(BLink link) {
-  return link != BLink::NPos;
-}
-
-static_assert(!std::is_same_v<FLink, BLink>,
-              "Two link types should be different types.");
 }  // namespace links
 
 }  // namespace detail

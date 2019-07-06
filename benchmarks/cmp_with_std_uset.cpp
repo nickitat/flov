@@ -15,12 +15,12 @@ template <class Container>
 struct Adaptor;
 
 template <>
-struct Adaptor<flov::Flov> {
+struct Adaptor<flov::Flov<>> {
   void Insert(int key) {
     ds.PushBack(key);
   }
 
-  flov::Flov ds;
+  flov::Flov<> ds;
 };
 
 template <>
@@ -69,7 +69,7 @@ void BM_InsertNRandomKeys(benchmark::State& state) {
   }
 }
 
-BENCHMARK_TEMPLATE(BM_InsertNRandomKeys, Adaptor<flov::Flov>)
+BENCHMARK_TEMPLATE(BM_InsertNRandomKeys, Adaptor<flov::Flov<>>)
     ->Range(16, 1 << 20);
 BENCHMARK_TEMPLATE(BM_InsertNRandomKeys, Adaptor<std::set<int>>)
     ->Range(16, 1 << 20);
