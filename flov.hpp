@@ -92,6 +92,7 @@ class Flov {
 
   void FLOV_NOINLINE PushBack(KeyType key) {
     if (!nodes.empty()) {
+      // nodes.reserve(nodes.size() + 1); // brings strong EG
       auto&& [nodeWithLongestMatchingPrefix, bit] = FindEx(key);
       FLOV_ASSERT(nodeWithLongestMatchingPrefix < Size());
       FLOV_ASSERT(nodes[nodeWithLongestMatchingPrefix].key != key);
