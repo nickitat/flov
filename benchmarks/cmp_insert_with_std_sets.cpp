@@ -1,7 +1,5 @@
 #include <flov.hpp>
 
-#include <benchmarks/profiling_wrapper.hpp>
-
 #include <benchmark/benchmark.h>
 
 #include <random>
@@ -58,8 +56,6 @@ template <class Container>
 void BM_InsertNRandomKeys(benchmark::State& state) {
   const auto N = state.range(0);
   const auto keys = GenerateRandomKeys(N);
-
-  // flov::bench::PerfProfilingWrapper("insert.prof");
 
   for (auto _ : state) {
     Container container;
