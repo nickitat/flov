@@ -18,66 +18,77 @@ namespace flov {
 
 namespace detail {
 
-template <class Key, uint8_t Bits, class FLinkT = links::FLink>
-// class BLinkT = links::BLink>
+template <class KeyType, uint8_t Bits, class PositionT>
 class Node {
+  static_assert(std::is_arithmetic_v<KeyType>,
+                "KeyType should be an arithmetic type");
+
  public:
-  using FLink = FLinkT;
-  // using BLink = BLinkT;
+  using Position = PositionT;
 
   struct Link {
-    uint8_t bit;
-    FLink link;
+    Link(Position to, uint8_t bit) noexcept : to(to), bit(bit) {
+    }
+
+    Position to = 0;
+    uint8_t bit = 0;
   };
 
-  Node(Key key) : key(key) {
-    // std::fill(std::begin(link), std::end(link), FLink::NPos);
-    // std::fill(std::begin(rlink), std::end(rlink), BLink::NPos);
-    // std::fill(std::begin(match), std::end(match), BLink::NPos);
+ public:
+  Node(KeyType key) noexcept : key(key) {
   }
 
-  Key key;  // the key stored
+  void InsertNewLink(Link link) {
+    links.push_back(link);
+    linksMask |= (static_cast<KeyType>(1) << link.bit);
+    RestoreLinksOrder();
+  }
 
-  Key linksMask = 0;
+ private:
+  void RestoreLinksOrder() noexcept {
+    FLOV_ASSERT(links.size());
+    auto i = links.size();
+    while (--i && links[i].bit < links[i - 1].bit)
+      std::swap(links[i], links[i - 1]);
+
+    FLOV_ASSERT(
+        std::is_sorted(links.begin(), links.end(),
+                       [](auto& lhs, auto& rhs) { return lhs.bit < rhs.bit; }));
+  }
+
+ public:
+  KeyType key;  // the key stored
+
+  KeyType linksMask = 0;  // stores bits for which there is a link in |links|
   std::vector<Link> links;
-
-  // FLink link[Bits];  // link[i] - nearest position from the right where
-  // placed a number having first |i| bits equal to the
-  // first |i| bits of |key| and whose |i|-th bit
-  // differs from the |i|-th bit of |key|
-
-  // BLink rlink[Bits];  // rlink[i] - nearest position from the left where
-  // placed a number having first |i| bits equal to the
-  // first |i| bits of |key| and whose |i|-th bit
-  // differs from the |i|-th bit of |key|
-
-  // BLink match[Bits];  // match[i] - nearest position from the left where
-  // placed a number having all bits 0...|i| equal to the
-  // bits 0...|i| of |key|
 };
 
 template <class KeyType>
-inline bool KeysDifferInBit(const KeyType lhs, const KeyType rhs, uint8_t bit) {
+inline bool KeysDifferInBit(const KeyType lhs,
+                            const KeyType rhs,
+                            uint8_t bit) noexcept {
   return ((lhs >> bit) & 1) != ((rhs >> bit) & 1);
 }
 
 template <class KeyType>
-inline bool KeysMatchInBit(const KeyType lhs, const KeyType rhs, uint8_t bit) {
+inline bool KeysMatchInBit(const KeyType lhs,
+                           const KeyType rhs,
+                           uint8_t bit) noexcept {
   return ((lhs >> bit) & 1) == ((rhs >> bit) & 1);
 }
 
 }  // namespace detail
 
+template <class KeyType = int>
 class Flov {
-  using KeyType = int;
   static constexpr uint32_t B = CHAR_BIT * sizeof(KeyType);
-  using Node = detail::Node<KeyType, B>;
-  using FLink = Node::FLink;
-  // using BLink = Node::BLink;
+  using Node = detail::Node<KeyType, B, detail::links::Position>;
+  using Link = typename Node::Link;
+  using Position = typename Node::Position;
   using Nodes = std::vector<Node>;
 
  public:
-  using SizeType = std::common_type_t<FLink::DataType, Nodes::size_type>;
+  using SizeType = typename Position::DataType;
 
   void FLOV_NOINLINE PushBack(KeyType key) {
     if (!nodes.empty()) {
@@ -85,20 +96,8 @@ class Flov {
       FLOV_ASSERT(nodeWithLongestMatchingPrefix < Size());
       FLOV_ASSERT(nodes[nodeWithLongestMatchingPrefix].key != key);
       FLOV_ASSERT(bit < B);
-      nodes[nodeWithLongestMatchingPrefix].linksMask |= (KeyType)1 << bit;
-      auto& links = nodes[nodeWithLongestMatchingPrefix].links;
-      links.push_back({bit, static_cast<FLink::DataType>(Size())});
-      for (size_t i = links.size() - 1; i > 0; --i) {
-        if (links[i].bit < links[i - 1].bit) {
-          using std::swap;
-          swap(links[i], links[i - 1]);
-        } else {
-          break;
-        }
-      }
-      FLOV_ASSERT(std::is_sorted(
-          links.begin(), links.end(),
-          [](auto& lhs, auto& rhs) { return lhs.bit < rhs.bit; }));
+      const auto newElementPos = Size();
+      nodes[nodeWithLongestMatchingPrefix].InsertNewLink({newElementPos, bit});
     }
     nodes.emplace_back(key);
   }
@@ -106,12 +105,13 @@ class Flov {
   SizeType Find(KeyType key) const {
     auto&& [nodeWithLongestMatchingPrefix, bit] = FindEx(key);
     FLOV_ASSERT(nodeWithLongestMatchingPrefix < Size() && bit <= B);
-    const bool keysMatch = nodes[nodeWithLongestMatchingPrefix].key == key;
-    return keysMatch ? nodeWithLongestMatchingPrefix : Size();
+    return nodes[nodeWithLongestMatchingPrefix].key == key
+               ? static_cast<SizeType>(nodeWithLongestMatchingPrefix)
+               : Size();
   }
 
   SizeType Size() const {
-    return nodes.size();
+    return static_cast<SizeType>(nodes.size());
   }
 
   const KeyType& operator[](SizeType index) const {
@@ -125,56 +125,38 @@ class Flov {
   }
 
  private:
+  static constexpr KeyType one = static_cast<KeyType>(1);
+
   // node with longest matching prefix; first bit where they differ
-  std::pair<FLink, uint8_t> FLOV_NOINLINE FindEx(KeyType key) const {
-    FLink current{};
+  Link FLOV_NOINLINE FindEx(KeyType key) const {
+    Position current{};
     while (true) {
-      if (key == nodes[current].key)
-        return {current, B};
-      const uint8_t bit = __builtin_ctz(key ^ nodes[current].key);
-      FLOV_ASSERT(bit < B);
-      if (nodes[current].linksMask & ((KeyType)1 << bit)) {
-        const auto mask = ((KeyType)1 << bit) - 1;
-        const auto pos = __builtin_popcount(nodes[current].linksMask & mask);
-        FLOV_ASSERT(nodes[current].links[pos].bit == bit);
-        current = nodes[current].links[pos].link;
-        // for (auto& link : nodes[current].links) {
-        //   if (link.bit == bit) {
-        //     current = link.link;
-        //     break;
-        //   }
-        // }
-
+      const auto keysXor = key ^ nodes[current].key;
+      if (keysXor) {
+        const uint8_t firstMismatchingBit = __builtin_ctz(keysXor);
+        FLOV_ASSERT(firstMismatchingBit < B);
+        if (nodes[current].linksMask & (one << firstMismatchingBit)) {
+          const auto mask = (one << firstMismatchingBit) - 1;
+          // index of the link for |firstMismatchingBit| == (how many links are
+          // there for smaller bits)
+          const auto index =
+              __builtin_popcount(nodes[current].linksMask & mask);
+          FLOV_ASSERT(index < nodes[current].links.size());
+          FLOV_ASSERT(nodes[current].links[index].bit == firstMismatchingBit);
+          current = nodes[current].links[index].to;
+        } else {
+          return {current, firstMismatchingBit};
+        }
       } else {
-        return {current, bit};
+        return {current, B};
       }
-      // maybe here we can do smth like if (link[i].bit > link[i+1].bit)
-      // swap(link[i], link[i+1]);
     }
-
-    // if (detail::KeysDifferInBit(key, nodes[current].key, bit)) {
-    //   if (IsValid(nodes[current].link[bit])) {
-    //     current = nodes[current].link[bit];
-    //     FLOV_DEBUG_INFO(
-    //         __statistics.MarkLinkAsUsed(current,
-    //         nodes[current].link[bit]));
-    //   } else
-    //     break;
-    // }
   }
 
+ private:
   std::vector<Node> nodes;
 
  private:
-  struct Statistics {
-    void MarkLinkAsUsed(const FLink& from, const FLink& to) {
-      usedLinks.insert(((uint64_t)from << 32) + to);
-    }
-    uint64_t numberOfEstablishedLinks = 0;
-    std::unordered_set<uint64_t> usedLinks;
-  };
-  mutable Statistics __statistics;
-
   friend void ::TestInsertNRandomKeysThenSearchForThem(const int);
 };  // namespace flov
 

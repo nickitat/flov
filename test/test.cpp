@@ -42,7 +42,7 @@ void ReportMistake(const int dsSize,
                    const int insertedAt,
                    const size_t foundAt,
                    const int wherePlaced) {
-  cout << "Mistake: the key " << key << " ";
+  cout << "Mistake: the key " << std::bitset<32>(key).to_string() << " ";
   if (foundAt == dsSize) {
     cout << "was not found" << endl;
   } else {
@@ -66,20 +66,18 @@ void TestInsertNRandomKeysThenSearchForThem(const int N) {
     const auto f = ds.Find(keys[index]);
     if (f >= ds.Size() || ds[f] != keys[index]) {
       mistakesFound = true;
-      ReportMistake(ds.Size(), keys[index], index, f, ds[f]);
+      if (f < ds.Size())
+        ReportMistake(ds.Size(), keys[index], index, f, ds[f]);
+      else
+        ReportMistake(ds.Size(), keys[index], index, f, 0);
     }
   }
 
   ASSERT_FALSE(mistakesFound);
-
-  // ASSERT_EQ(ds.__statistics.usedLinks.size(), N - 1);
-
-  constexpr auto KeyBitLen = sizeof(int) * CHAR_BIT;
-  ASSERT_LE(ds.__statistics.numberOfEstablishedLinks, N * KeyBitLen);
 }
 
 int main() {
-  for (int i = 0; i < 10; ++i)
+  for (int i = 0; i < 50; ++i)
     TestInsertNRandomKeysThenSearchForThem(123'456);
   return 0;
 }
