@@ -27,10 +27,12 @@ class Node {
   using Position = PositionT;
 
   struct Link {
+    Link() = default;
+
     Link(Position to, uint8_t bit) noexcept : to(to), bit(bit) {
     }
 
-    Position to = 0;
+    Position to{};
     uint8_t bit = 0;
   };
 
@@ -60,7 +62,44 @@ class Node {
   KeyType key;  // the key stored
 
   KeyType linksMask = 0;  // stores bits for which there is a link in |links|
-  std::vector<Link> links;
+  // std::vector<Link> links;
+  struct StackVector {
+    static const int SIZE = 8;
+    int ptr = 0;
+    void push_back(Link link) {
+      // FLOV_ASSERT(ptr < SIZE);
+      if (ptr < SIZE)
+        links[ptr++] = link;
+      else
+        vlinks.push_back(link);
+    }
+    Link& operator[](int index) {
+      // FLOV_ASSERT(index < SIZE);
+      if (index < SIZE)
+        return links[index];
+      else
+        return vlinks[index - SIZE];
+    }
+    const Link& operator[](int index) const {
+      // FLOV_ASSERT(index < SIZE);
+      if (index < SIZE)
+        return links[index];
+      else
+        return vlinks[index - SIZE];
+    }
+    int size() const {
+      return ptr + vlinks.size();
+    }
+    const Link* begin() const {
+      return links;
+    }
+    const Link* end() const {
+      return links + ptr;
+    }
+    Link links[SIZE];
+    std::vector<Link> vlinks;
+  };
+  StackVector links;
 };
 
 template <class KeyType>
