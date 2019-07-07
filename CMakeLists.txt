@@ -67,7 +67,11 @@ if(NICKITAT_FLOV_WITH_BENCHMARKS)
   target_link_libraries(flov_bench_insert_with_std_sets flov ${additional_libs})
   target_compile_options(flov_bench_insert_with_std_sets
                          PRIVATE ${additional_compiler_flags})
-endif()
 
-# I'm currently using the following script: cmake . -Bbuild
-# -DCMAKE_CXX_COMPILER=clang++ && cmake --build build && build/flov_tests
+  add_executable(flov_bench_insert_find_with_std_sets
+                 benchmarks/cmp_insert_find_with_std_sets.cpp)
+  target_link_libraries(flov_bench_insert_find_with_std_sets flov
+                        ${additional_libs})
+  target_compile_options(flov_bench_insert_find_with_std_sets
+                         PRIVATE ${additional_compiler_flags})
+endif()
