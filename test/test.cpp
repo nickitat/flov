@@ -1,6 +1,7 @@
 #include <flov.hpp>
 
 #include <algorithm>
+#include <bitset>
 #include <chrono>
 #include <iostream>
 #include <random>

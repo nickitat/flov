@@ -4,6 +4,7 @@
 #include <detail/macros.hpp>
 
 #include <limits.h>  // CHAR_BIT
+#include <algorithm>
 #include <cassert>
 #include <cstring>
 #include <iostream>
