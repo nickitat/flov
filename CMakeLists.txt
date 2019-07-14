@@ -35,7 +35,7 @@ if(NICKITAT_FLOV_WITH_BENCHMARKS)
   set(additional_libs ${additional_libs} benchmark benchmark_main)
 endif()
 
-set(additional_compiler_flags -std=c++17 -O2)
+set(additional_compiler_flags -std=c++17 -O2 -W -Wall -Wextra -pedantic)
 if(NICKITAT_FLOV_WITH_BENCHMARKS)
   set(additional_compiler_flags
       ${additional_compiler_flags}

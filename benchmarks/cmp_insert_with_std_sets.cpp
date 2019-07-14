@@ -66,8 +66,11 @@ void BM_InsertNRandomKeys(benchmark::State& state) {
 }
 
 BENCHMARK_TEMPLATE(BM_InsertNRandomKeys, Adaptor<flov::Flov<>>)
+    ->RangeMultiplier(2)
     ->Range(16, 1 << 20);
 BENCHMARK_TEMPLATE(BM_InsertNRandomKeys, Adaptor<std::set<int>>)
+    ->RangeMultiplier(2)
     ->Range(16, 1 << 20);
 BENCHMARK_TEMPLATE(BM_InsertNRandomKeys, Adaptor<std::unordered_set<int>>)
+    ->RangeMultiplier(2)
     ->Range(16, 1 << 20);
