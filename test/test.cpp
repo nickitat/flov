@@ -38,7 +38,7 @@ vector<int> GenerateRandomPermutation(size_t length) {
   return permutation;
 }
 
-void ReportMistake(const int dsSize,
+void ReportMistake(const size_t dsSize,
                    const int key,
                    const int insertedAt,
                    const size_t foundAt,

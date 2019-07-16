@@ -58,7 +58,8 @@ if(NICKITAT_FLOV_WITH_TESTS)
   target_link_libraries(flov_tests flov ${additional_libs})
   target_compile_options(flov_tests
                          PRIVATE ${additional_compiler_flags}
-                                 -DFLOV_WITH_DEBUG_INFO)
+                                 -DFLOV_WITH_DEBUG_INFO
+                                 -DFLOV_DEBUG_BUILD)
 endif()
 
 if(NICKITAT_FLOV_WITH_BENCHMARKS)
