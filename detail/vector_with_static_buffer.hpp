@@ -19,12 +19,12 @@ class StaticBuffer {
   }
 
   _T& operator[](size_type index) {
-    FLOV_ASSERT(last < _Size);
+    FLOV_ASSERT(index < _Size);
     return buffer[index];
   }
 
   const _T& operator[](size_type index) const {
-    FLOV_ASSERT(last < _Size);
+    FLOV_ASSERT(index < _Size);
     return buffer[index];
   }
 
