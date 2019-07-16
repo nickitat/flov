@@ -90,7 +90,7 @@ class Node {
   KeyType key;  // the key stored
 
   KeyType linksMask = 0;  // stores bits for which there is a link in |links|
-  VectorWithStaticBuffer<Link, 3> links;
+  VectorWithStaticBuffer<Link, 4> links;
 };
 
 template <class KeyType>
