@@ -4,6 +4,8 @@
 #define FLOV_NOINLINE __attribute__((noinline))
 
 #ifdef FLOV_WITH_DEBUG_INFO
+#include <cassert>
+
 #define FLOV_ASSERT(x) assert((x))
 #else
 #define FLOV_ASSERT(x)
