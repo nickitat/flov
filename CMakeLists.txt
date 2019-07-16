@@ -27,12 +27,15 @@ download_project(PROJ
 
 add_subdirectory(${CMAKE_BINARY_DIR}/nmpl/nickitat_mpl-src)
 
-set(additional_libs profiler nickitat_mpl)
+set(additional_libs nickitat_mpl)
+if(NICKITAT_FLOV_WITH_PROFILING)
+  set(additional_libs ${additional_libs} profiler) # google-perftools
+endif()
 if(NICKITAT_FLOV_WITH_BENCHMARKS)
   set(additional_libs ${additional_libs} benchmark benchmark_main)
 endif()
 
-set(additional_compiler_flags -std=c++17 -O2)
+set(additional_compiler_flags -std=c++17 -O2 -W -Wall -Wextra -pedantic)
 if(NICKITAT_FLOV_WITH_BENCHMARKS)
   set(additional_compiler_flags
       ${additional_compiler_flags}
@@ -53,15 +56,22 @@ endif()
 if(NICKITAT_FLOV_WITH_TESTS)
   add_executable(flov_tests test/test.cpp)
   target_link_libraries(flov_tests flov ${additional_libs})
-  target_compile_options(flov_tests PRIVATE ${additional_compiler_flags} -DFLOV_WITH_DEBUG_INFO)
+  target_compile_options(flov_tests
+                         PRIVATE ${additional_compiler_flags}
+                                 -DFLOV_WITH_DEBUG_INFO)
 endif()
 
 if(NICKITAT_FLOV_WITH_BENCHMARKS)
-  add_executable(flov_bench_std_uset benchmarks/cmp_with_std_uset.cpp)
-  target_link_libraries(flov_bench_std_uset flov ${additional_libs})
-  target_compile_options(flov_bench_std_uset
+  add_executable(flov_bench_insert_with_std_sets
+                 benchmarks/cmp_insert_with_std_sets.cpp)
+  target_link_libraries(flov_bench_insert_with_std_sets flov ${additional_libs})
+  target_compile_options(flov_bench_insert_with_std_sets
+                         PRIVATE ${additional_compiler_flags})
+
+  add_executable(flov_bench_insert_find_with_std_sets
+                 benchmarks/cmp_insert_find_with_std_sets.cpp)
+  target_link_libraries(flov_bench_insert_find_with_std_sets flov
+                        ${additional_libs})
+  target_compile_options(flov_bench_insert_find_with_std_sets
                          PRIVATE ${additional_compiler_flags})
 endif()
-
-# I'm currently using the following script: cmake . -Bbuild
-# -DCMAKE_CXX_COMPILER=clang++ && cmake --build build && build/flov_tests

@@ -1,7 +1,5 @@
 #include <flov.hpp>
 
-#include <benchmarks/profiling_wrapper.hpp>
-
 #include <benchmark/benchmark.h>
 
 #include <random>
@@ -20,6 +18,10 @@ struct Adaptor<flov::Flov<>> {
     ds.PushBack(key);
   }
 
+  void Find(int key) {
+    ds.Find(key);
+  }
+
   flov::Flov<> ds;
 };
 
@@ -28,6 +30,11 @@ struct Adaptor<std::set<int>> {
   void Insert(int key) {
     ds.insert(key);
   }
+
+  void Find(int key) {
+    ds.find(key);
+  }
+
   std::set<int> ds;
 };
 
@@ -35,6 +42,10 @@ template <>
 struct Adaptor<std::unordered_set<int>> {
   void Insert(int key) {
     ds.insert(key);
+  }
+
+  void Find(int key) {
+    ds.find(key);
   }
 
   std::unordered_set<int> ds;
@@ -52,6 +63,16 @@ std::vector<int> GenerateRandomKeys(size_t amount) {
   return std::vector<int>{keys.begin(), keys.end()};
 }
 
+std::vector<int> GenerateRandomPermutation(size_t length) {
+  std::random_device rd;
+  std::mt19937 g{rd()};
+
+  std::vector<int> permutation(length);
+  iota(permutation.begin(), permutation.end(), 0);
+  std::shuffle(permutation.begin(), permutation.end(), g);
+  return permutation;
+}
+
 }  // namespace
 
 template <class Container>
@@ -59,12 +80,15 @@ void BM_InsertNRandomKeys(benchmark::State& state) {
   const auto N = state.range(0);
   const auto keys = GenerateRandomKeys(N);
 
-  // flov::bench::PerfProfilingWrapper("insert.prof");
-
   for (auto _ : state) {
+    state.PauseTiming();
     Container container;
     for (const auto& key : keys) {
       container.Insert(key);
+    }
+    state.ResumeTiming();
+    for (auto index : GenerateRandomPermutation(N)) {
+      container.Find(keys[index]);
     }
   }
 }

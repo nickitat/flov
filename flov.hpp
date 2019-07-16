@@ -4,6 +4,7 @@
 #include <detail/macros.hpp>
 
 #include <limits.h>  // CHAR_BIT
+#include <algorithm>
 #include <cassert>
 #include <cstring>
 #include <iostream>
@@ -27,11 +28,85 @@ class Node {
   using Position = PositionT;
 
   struct Link {
-    Link(Position to, uint8_t bit) noexcept : to(to), bit(bit) {
+    Position to{};
+    uint8_t bit = 0;
+  };
+
+  template <class T, uint8_t _Size>
+  class StaticBuffer {
+   public:
+    using size_type = uint8_t;
+
+    void PushBack(T link) {
+      FLOV_ASSERT(last < _Size);
+      buffer[last++] = std::move(link);
     }
 
-    Position to = 0;
-    uint8_t bit = 0;
+    Link& operator[](size_type index) {
+      FLOV_ASSERT(last < _Size);
+      return buffer[index];
+    }
+
+    const Link& operator[](size_type index) const {
+      FLOV_ASSERT(last < _Size);
+      return buffer[index];
+    }
+
+    size_type Size() const {
+      return last;
+    }
+
+    const T* Begin() const {
+      return buffer;
+    }
+    const T* End() const {
+      return buffer + last;
+    }
+
+   private:
+    size_type last = 0;
+    T buffer[_Size];
+  };
+
+  template <class _T, uint8_t _Size>
+  class VectorWithStaticBuffer {
+   public:
+    using size_type = typename std::vector<Link>::size_type;
+
+    void PushBack(_T link) {
+      buffer.Size() < _Size ? buffer.PushBack(std::move(link))
+                            : vector.push_back(std::move(link));
+    }
+
+    Link& operator[](size_type index) {
+      if (index < _Size)
+        return buffer[index];
+      else
+        return vector[index - _Size];
+    }
+
+    const Link& operator[](size_type index) const {
+      if (index < _Size)
+        return buffer[index];
+      else
+        return vector[index - _Size];
+    }
+
+    size_type Size() const {
+      return buffer.Size() + vector.size();
+    }
+
+    // TODO: impl correctly or remove
+    const _T* Begin() const {
+      return buffer.Begin();
+    }
+    const _T* End() const {
+      return buffer.End();
+    }
+
+   private:
+    StaticBuffer<_T, _Size> buffer;
+    std::vector<_T> vector;
   };
 
  public:
@@ -39,20 +114,20 @@ class Node {
   }
 
   void InsertNewLink(Link link) {
-    links.push_back(link);
+    links.PushBack(link);
     linksMask |= (static_cast<KeyType>(1) << link.bit);
     RestoreLinksOrder();
   }
 
  private:
   void RestoreLinksOrder() noexcept {
-    FLOV_ASSERT(links.size());
-    auto i = links.size();
+    FLOV_ASSERT(links.Size());
+    auto i = links.Size();
     while (--i && links[i].bit < links[i - 1].bit)
       std::swap(links[i], links[i - 1]);
 
     FLOV_ASSERT(
-        std::is_sorted(links.begin(), links.end(),
+        std::is_sorted(links.Begin(), links.End(),
                        [](auto& lhs, auto& rhs) { return lhs.bit < rhs.bit; }));
   }
 
@@ -60,7 +135,7 @@ class Node {
   KeyType key;  // the key stored
 
   KeyType linksMask = 0;  // stores bits for which there is a link in |links|
-  std::vector<Link> links;
+  VectorWithStaticBuffer<Link, 32> links;
 };
 
 template <class KeyType>
@@ -92,6 +167,7 @@ class Flov {
 
   void FLOV_NOINLINE PushBack(KeyType key) {
     if (!nodes.empty()) {
+      // nodes.reserve(nodes.size() + 1); // brings strong EG
       auto&& [nodeWithLongestMatchingPrefix, bit] = FindEx(key);
       FLOV_ASSERT(nodeWithLongestMatchingPrefix < Size());
       FLOV_ASSERT(nodes[nodeWithLongestMatchingPrefix].key != key);
@@ -141,7 +217,7 @@ class Flov {
           // there for smaller bits)
           const auto index =
               __builtin_popcount(nodes[current].linksMask & mask);
-          FLOV_ASSERT(index < nodes[current].links.size());
+          FLOV_ASSERT(index < nodes[current].links.Size());
           FLOV_ASSERT(nodes[current].links[index].bit == firstMismatchingBit);
           current = nodes[current].links[index].to;
         } else {

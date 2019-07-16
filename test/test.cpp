@@ -1,6 +1,7 @@
 #include <flov.hpp>
 
 #include <algorithm>
+#include <bitset>
 #include <chrono>
 #include <iostream>
 #include <random>
@@ -55,7 +56,7 @@ void ReportMistake(const int dsSize,
 void TestInsertNRandomKeysThenSearchForThem(const int N) {
   const auto keys = GenerateUniqueRandomKeys(N);
 
-  flov::Flov ds;
+  flov::Flov<> ds;
   ds.nodes.reserve(N);
   for (const auto& key : keys) {
     ds.PushBack(key);
