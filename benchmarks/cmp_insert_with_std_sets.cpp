@@ -50,13 +50,17 @@ std::vector<int> GenerateRandomKeys(size_t amount) {
   return std::vector<int>{keys.begin(), keys.end()};
 }
 
-}  // namespace
+class BM_InsertNRandomKeys : public benchmark::Fixture {
+ public:
+  void SetUp(const ::benchmark::State& state) {
+    input = GenerateRandomKeys(state.range(0));
+  }
+
+  std::vector<int> input;
+};
 
 template <class Container>
-void BM_InsertNRandomKeys(benchmark::State& state) {
-  const auto N = state.range(0);
-  const auto keys = GenerateRandomKeys(N);
-
+void InsertKeys(benchmark::State& state, const std::vector<int>& keys) {
   for (auto _ : state) {
     Container container;
     for (const auto& key : keys) {
@@ -65,12 +69,25 @@ void BM_InsertNRandomKeys(benchmark::State& state) {
   }
 }
 
-BENCHMARK_TEMPLATE(BM_InsertNRandomKeys, Adaptor<flov::Flov<>>)
+}  // namespace
+
+BENCHMARK_DEFINE_F(BM_InsertNRandomKeys, Flov)(benchmark::State& st) {
+  InsertKeys<Adaptor<flov::Flov<>>>(st, input);
+}
+BENCHMARK_REGISTER_F(BM_InsertNRandomKeys, Flov)
     ->RangeMultiplier(2)
     ->Range(16, 1 << 20);
-BENCHMARK_TEMPLATE(BM_InsertNRandomKeys, Adaptor<std::set<int>>)
+
+BENCHMARK_DEFINE_F(BM_InsertNRandomKeys, Set)(benchmark::State& st) {
+  InsertKeys<Adaptor<std::set<int>>>(st, input);
+}
+BENCHMARK_REGISTER_F(BM_InsertNRandomKeys, Set)
     ->RangeMultiplier(2)
     ->Range(16, 1 << 20);
-BENCHMARK_TEMPLATE(BM_InsertNRandomKeys, Adaptor<std::unordered_set<int>>)
+
+BENCHMARK_DEFINE_F(BM_InsertNRandomKeys, USet)(benchmark::State& st) {
+  InsertKeys<Adaptor<std::unordered_set<int>>>(st, input);
+}
+BENCHMARK_REGISTER_F(BM_InsertNRandomKeys, USet)
     ->RangeMultiplier(2)
     ->Range(16, 1 << 20);
