@@ -35,7 +35,13 @@ if(NICKITAT_FLOV_WITH_BENCHMARKS)
   set(additional_libs ${additional_libs} benchmark benchmark_main)
 endif()
 
-set(additional_compiler_flags -std=c++17 -O2 -W -Wall -Wextra -pedantic)
+set(additional_compiler_flags
+    -std=c++17
+    -O2
+    -W
+    -Wall
+    -Wextra
+    -pedantic)
 if(NICKITAT_FLOV_WITH_BENCHMARKS)
   set(additional_compiler_flags
       ${additional_compiler_flags}
@@ -56,10 +62,9 @@ endif()
 if(NICKITAT_FLOV_WITH_TESTS)
   add_executable(flov_tests test/test.cpp)
   target_link_libraries(flov_tests flov ${additional_libs})
-  target_compile_options(flov_tests
-                         PRIVATE ${additional_compiler_flags}
-                                 -DFLOV_WITH_DEBUG_INFO
-                                 -DFLOV_DEBUG_BUILD)
+  target_compile_options(
+    flov_tests
+    PRIVATE ${additional_compiler_flags} -DFLOV_DEBUG_BUILD)
 endif()
 
 if(NICKITAT_FLOV_WITH_BENCHMARKS)

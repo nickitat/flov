@@ -90,22 +90,8 @@ class Node {
   KeyType key;  // the key stored
 
   KeyType linksMask = 0;  // stores bits for which there is a link in |links|
-  VectorWithStaticBuffer<Link, 4> links;
+  VectorWithStaticBuffer<Link, 3> links;
 };
-
-template <class KeyType>
-inline bool KeysDifferInBit(const KeyType lhs,
-                            const KeyType rhs,
-                            uint8_t bit) noexcept {
-  return ((lhs >> bit) & 1) != ((rhs >> bit) & 1);
-}
-
-template <class KeyType>
-inline bool KeysMatchInBit(const KeyType lhs,
-                           const KeyType rhs,
-                           uint8_t bit) noexcept {
-  return ((lhs >> bit) & 1) == ((rhs >> bit) & 1);
-}
 
 }  // namespace detail
 
@@ -157,7 +143,7 @@ class Flov {
 
  private:
   // node with longest matching prefix; first bit where they differ
-  std::pair<Position, uint8_t> FLOV_NOINLINE FindEx(KeyType key) const {
+  Link FLOV_NOINLINE FindEx(KeyType key) const {
     Position current{};
     while (true) {
       const auto keysXor = key ^ nodes[current].key;
