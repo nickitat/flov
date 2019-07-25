@@ -26,6 +26,7 @@ struct Adaptor<std::set<int>> {
   void Insert(int key) {
     ds.insert(key);
   }
+
   std::set<int> ds;
 };
 

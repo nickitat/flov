@@ -57,7 +57,7 @@ void TestInsertNRandomKeysThenSearchForThem(const int N) {
   const auto keys = GenerateUniqueRandomKeys(N);
 
   flov::Flov<> ds;
-  ds.nodes.reserve(N);
+  // ds.nodes.reserve(N);
   for (const auto& key : keys) {
     ds.PushBack(key);
   }
@@ -65,12 +65,13 @@ void TestInsertNRandomKeysThenSearchForThem(const int N) {
   bool mistakesFound = false;
   for (auto index : GenerateRandomPermutation(N)) {
     const auto f = ds.Find(keys[index]);
-    if (f >= ds.Size() || ds[f] != keys[index]) {
+    if (f == nullptr || f->key != keys[index]) {
       mistakesFound = true;
-      if (f < ds.Size())
-        ReportMistake(ds.Size(), keys[index], index, f, ds[f]);
-      else
-        ReportMistake(ds.Size(), keys[index], index, f, 0);
+      // std::cerr << keys[index] << " " << (f ? f->key : -1) << std::endl;
+      // if (f < ds.Size())
+      //   ReportMistake(ds.Size(), keys[index], index, f, ds[f]);
+      // else
+      //   ReportMistake(ds.Size(), keys[index], index, f, 0);
     }
   }
 

@@ -48,7 +48,8 @@ if(NICKITAT_FLOV_WITH_BENCHMARKS)
       -g
       -fno-omit-frame-pointer
       -fno-rtti
-      -fno-exceptions)
+      #-fno-exceptions
+      )
 endif()
 
 find_package(Threads REQUIRED)
