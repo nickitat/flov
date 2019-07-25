@@ -54,43 +54,34 @@ class Node {
 
   struct Link {
     Position chain{};
-    Position posInChain{};
+    uint8_t posInChain = 0;
     uint8_t bit = 0;
   };
 
  public:
-  Node() noexcept : key(-1231) {
-  }
+  Node() noexcept = default;
 
   Node(KeyType key) noexcept : key(key) {
   }
 
-  //   void InsertNewLink(Position to, uint8_t bit) {
-  // #ifdef FLOV_DEBUG_BUILD
-  //     links.PushBack({to, bit});
-  // #else
-  //     links.PushBack({to});
-  // #endif
-  //     static constexpr KeyType one = static_cast<KeyType>(1);
-  //     FLOV_ASSERT((linksMask & (one << bit)) == 0);
-  //     linksMask |= (one << bit);
-  //     RestoreLinksOrder(GetIndexOfBit(linksMask, bit));
-  //   }
-
-  void InsertNewLink(Position chain, Position posInChain, uint8_t bit) {
+  void InsertNewLink(Position chain, uint8_t posInChain, uint8_t bit) {
+#ifdef FLOV_DEBUG_BUILD
     links.PushBack(Link{chain, posInChain, bit});
-    linksMask |= (1 << bit);
-    RestoreLinksOrder();
+#else
+    links.PushBack(Link{chain, posInChain});
+#endif
+
+    static constexpr KeyType one = static_cast<KeyType>(1);
+    FLOV_ASSERT((linksMask & (one << bit)) == 0);
+    linksMask |= (one << bit);
+    RestoreLinksOrder(GetIndexOfBit(linksMask, bit));
   }
 
  private:
-  void RestoreLinksOrder(/*uint8_t index*/) noexcept {
-    // FLOV_ASSERT(index < links.Size());
-    // for (uint8_t i = links.Size() - 1; i > index; --i)
-    //   std::swap(links[i], links[i - 1]);
-    for (uint8_t i = links.Size() - 1; i > 0; --i)
-      if (links[i].bit < links[i - 1].bit)
-        std::swap(links[i], links[i - 1]);
+  void RestoreLinksOrder(uint8_t index) noexcept {
+    FLOV_ASSERT(index < links.Size());
+    for (uint8_t i = links.Size() - 1; i > index; --i)
+      std::swap(links[i], links[i - 1]);
 
 #ifdef FLOV_DEBUG_BUILD
     FLOV_ASSERT(
@@ -100,7 +91,7 @@ class Node {
   }
 
  public:
-  KeyType key;  // the key stored
+  KeyType key = 0;  // the key stored
 
   KeyType linksMask = 0;  // stores bits for which there is a link in |links|
   VectorWithStaticBuffer<Link, 3> links;
@@ -108,7 +99,7 @@ class Node {
 
 template <class _KeyType, uint8_t _Bits, class _Position>
 struct Chain {
-  VectorWithStaticBuffer<Node<_KeyType, _Bits, _Position>, 5> nodes;
+  VectorWithStaticBuffer<Node<_KeyType, _Bits, _Position>, 3> nodes;
 };
 
 }  // namespace detail
@@ -127,47 +118,33 @@ class Flov {
   using SizeType = typename Position::DataType;
 
   void FLOV_NOINLINE PushBack(KeyType key) {
-    // std::cerr << "PushBack: " << std::bitset<32>(key).to_string() <<
-    // std::endl;
     if (!chains.empty()) {
       // nodes.reserve(nodes.size() + 1); // brings strong EG
-      auto&& [chain, posInChain, bit] = FindEx(key);
-      // std::cerr << "find res: " << chain << " " << posInChain << " "
-      //           << (uint32_t)bit << std::endl;
-      // FLOV_ASSERT(nodeWithLongestMatchingPrefix < Size());
-      // FLOV_ASSERT(nodes[nodeWithLongestMatchingPrefix].key != key);
-      // FLOV_ASSERT(bit < B);
-      auto chainToInsert = chains[chain].nodes[posInChain].links.Size() > 0
-                               ? (Position) static_cast<SizeType>(chains.size())
-                               : chain;
+      const auto&& [chain, posInChain, bit] = FindEx(key);
+      FLOV_ASSERT(chain < chains.size());
+      FLOV_ASSERT(posInChain < chains[chain].nodes.Size());
+      FLOV_ASSERT(chains[chain].nodes[posInChain].key != key);
+      FLOV_ASSERT(bit < B);
+      const auto chainToInsert = chains[chain].nodes[posInChain].links.Size() > 0 ? SizeAsPosition() : chain;
       if (chains[chain].nodes[posInChain].links.Size() > 0)
         chains.emplace_back();
-      const auto posToInsert =
-          chains[chain].nodes[posInChain].links.Size() > 0
-              ? Position{}
-              : (Position) static_cast<SizeType>(chains[chain].nodes.Size());
-      // const auto newElementPos = Size();
-      chains[chain].nodes[posInChain].InsertNewLink(chainToInsert, posToInsert,
-                                                    bit);
-      // nodes[nodeWithLongestMatchingPrefix].InsertNewLink(newElementPos, bit);
+      const uint8_t posToInsert =
+          chains[chain].nodes[posInChain].links.Size() > 0 ? 0 : static_cast<SizeType>(chains[chain].nodes.Size());
+      chains[chain].nodes[posInChain].InsertNewLink(chainToInsert, posToInsert, bit);
       chains[chainToInsert].nodes.PushBack(Node{key});
     } else {
-      Chain chain;
-      chain.nodes.PushBack(Node{key});
-      chains.push_back(chain);
+      chains.emplace_back();
+      chains.back().nodes.PushBack(Node{key});
     }
-    // nodes.emplace_back(key);
   }
 
   const Node* Find(KeyType key) const {
-    // std::cerr << "Find: " << std::bitset<32>(key).to_string() << std::endl;
     auto&& [chain, posInChain, bit] = FindEx(key);
-    // std::cerr << " " << chain << " " << posInChain << " " << bit <<
-    // std::endl; FLOV_ASSERT(nodeWithLongestMatchingPrefix < Size() && bit <=
-    // B);
-    return chains[chain].nodes[posInChain].key == key
-               ? &chains[chain].nodes[posInChain]
-               : nullptr;
+    FLOV_ASSERT(chain < chains.size());
+    FLOV_ASSERT(posInChain < chains[chain].nodes.Size());
+    const auto& node = chains[chain].nodes[posInChain];
+    FLOV_ASSERT((node.key != key && bit < B) || (node.key == key && bit == B));
+    return node.key == key ? &node : nullptr;
   }
 
   SizeType Size() const {
@@ -189,7 +166,7 @@ class Flov {
   Link FLOV_NOINLINE FindEx(KeyType key) const {
     // std::cerr << "FindEx:" << std::endl;
     Position chain{};
-    Position posInChain{};
+    uint8_t posInChain{};
     while (true) {
       // std::cerr
       //     << std::bitset<32>(chains[chain].nodes[posInChain].key).to_string()
@@ -222,6 +199,10 @@ class Flov {
         return {chain, posInChain, B};
       }
     }
+  }
+
+  Position SizeAsPosition() const noexcept {
+    return static_cast<Position>(static_cast<SizeType>(chains.size()));
   }
 
  private:
