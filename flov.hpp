@@ -99,7 +99,7 @@ class Node {
 
 template <class _KeyType, uint8_t _Bits, class _Position>
 struct Chain {
-  VectorWithStaticBuffer<Node<_KeyType, _Bits, _Position>, 2> nodes;
+  VectorWithStaticBuffer<Node<_KeyType, _Bits, _Position>, 3> nodes;
 };
 
 }  // namespace detail
@@ -125,12 +125,19 @@ class Flov {
       FLOV_ASSERT(posInChain < chains[chain].nodes.Size());
       FLOV_ASSERT(chains[chain].nodes[posInChain].key != key);
       FLOV_ASSERT(bit < B);
-      const auto chainToInsert = chains[chain].nodes[posInChain].links.Size() > 0 ? SizeAsPosition() : chain;
-      if (chains[chain].nodes[posInChain].links.Size() > 0)
+      const bool shouldAllocateNewChain =
+          !(chains[chain].nodes[posInChain].links.Size() == 0 ||
+            chains[chain].nodes.Size() < 3);
+      const auto chainToInsert =
+          shouldAllocateNewChain ? SizeAsPosition() : chain;
+      if (shouldAllocateNewChain)
         chains.emplace_back();
       const uint8_t posToInsert =
-          chains[chain].nodes[posInChain].links.Size() > 0 ? 0 : static_cast<SizeType>(chains[chain].nodes.Size());
-      chains[chain].nodes[posInChain].InsertNewLink(chainToInsert, posToInsert, bit);
+          shouldAllocateNewChain
+              ? 0
+              : static_cast<SizeType>(chains[chain].nodes.Size());
+      chains[chain].nodes[posInChain].InsertNewLink(chainToInsert, posToInsert,
+                                                    bit);
       chains[chainToInsert].nodes.PushBack(Node{key});
     } else {
       chains.emplace_back();
@@ -156,33 +163,33 @@ class Flov {
     // for(auto& c : chains) {
     //   chainsSizeOverall += c.nodes.Size();
     // }
-    // std::cerr << "Chain size avg: " << (double)chainsSizeOverall / chains.size() << std::endl;
-    // uint64_t linksSizeOverall = 0;
-    // uint64_t nodes = 0;
-    // for(auto& c : chains) {
+    // std::cerr << "Chain size avg: " << (double)chainsSizeOverall /
+    // chains.size() << std::endl; uint64_t linksSizeOverall = 0; uint64_t nodes
+    // = 0; for(auto& c : chains) {
     //   for(int i = 0; i < c.nodes.Size(); ++i) {
     //     nodes++;
     //     linksSizeOverall += c.nodes[i].links.Size();
     //   }
     // }
-    // std::cerr << "Links size avg: " << (double)linksSizeOverall / nodes << std::endl;
-    
+    // std::cerr << "Links size avg: " << (double)linksSizeOverall / nodes <<
+    // std::endl;
+
     // std::vector<int> cs;
     // for(auto& c : chains) {
     //   cs.push_back( c.nodes.Size() );
     // }
     // std::nth_element(cs.begin(), cs.begin() + chains.size() / 2, cs.end());
-    // std::cerr << "Chain size median: " << *(cs.begin() + chains.size() / 2) << std::endl;
-    // std::vector<int> ls;
-    // uint64_t nodes = 0;
-    // for(auto& c : chains) {
+    // std::cerr << "Chain size median: " << *(cs.begin() + chains.size() / 2)
+    // << std::endl; std::vector<int> ls; uint64_t nodes = 0; for(auto& c :
+    // chains) {
     //   for(int i = 0; i < c.nodes.Size(); ++i) {
     //     nodes++;
     //     ls.push_back( c.nodes[i].links.Size() );
     //   }
     // }
     // std::nth_element(ls.begin(), ls.begin() + nodes / 2, ls.end());
-    // std::cerr << "Links size median: " << *(ls.begin() + nodes / 2) << std::endl;
+    // std::cerr << "Links size median: " << *(ls.begin() + nodes / 2) <<
+    // std::endl;
   }
 
   // const KeyType& operator[](SizeType index) const {
