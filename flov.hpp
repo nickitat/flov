@@ -99,7 +99,7 @@ class Node {
 
 template <class _KeyType, uint8_t _Bits, class _Position>
 struct Chain {
-  VectorWithStaticBuffer<Node<_KeyType, _Bits, _Position>, 3> nodes;
+  VectorWithStaticBuffer<Node<_KeyType, _Bits, _Position>, 2> nodes;
 };
 
 }  // namespace detail
@@ -149,6 +149,40 @@ class Flov {
 
   SizeType Size() const {
     return static_cast<SizeType>(chains.size());
+  }
+
+  ~Flov() {
+    // uint64_t chainsSizeOverall = 0;
+    // for(auto& c : chains) {
+    //   chainsSizeOverall += c.nodes.Size();
+    // }
+    // std::cerr << "Chain size avg: " << (double)chainsSizeOverall / chains.size() << std::endl;
+    // uint64_t linksSizeOverall = 0;
+    // uint64_t nodes = 0;
+    // for(auto& c : chains) {
+    //   for(int i = 0; i < c.nodes.Size(); ++i) {
+    //     nodes++;
+    //     linksSizeOverall += c.nodes[i].links.Size();
+    //   }
+    // }
+    // std::cerr << "Links size avg: " << (double)linksSizeOverall / nodes << std::endl;
+    
+    // std::vector<int> cs;
+    // for(auto& c : chains) {
+    //   cs.push_back( c.nodes.Size() );
+    // }
+    // std::nth_element(cs.begin(), cs.begin() + chains.size() / 2, cs.end());
+    // std::cerr << "Chain size median: " << *(cs.begin() + chains.size() / 2) << std::endl;
+    // std::vector<int> ls;
+    // uint64_t nodes = 0;
+    // for(auto& c : chains) {
+    //   for(int i = 0; i < c.nodes.Size(); ++i) {
+    //     nodes++;
+    //     ls.push_back( c.nodes[i].links.Size() );
+    //   }
+    // }
+    // std::nth_element(ls.begin(), ls.begin() + nodes / 2, ls.end());
+    // std::cerr << "Links size median: " << *(ls.begin() + nodes / 2) << std::endl;
   }
 
   // const KeyType& operator[](SizeType index) const {
