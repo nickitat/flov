@@ -62,11 +62,7 @@ class Node {
   }
 
   void InsertNewLink(Position to, uint8_t bit) {
-#ifdef FLOV_DEBUG_BUILD
     links.PushBack({to, bit});
-#else
-    links.PushBack({to});
-#endif
     static constexpr KeyType one = static_cast<KeyType>(1);
     FLOV_ASSERT((linksMask & (one << bit)) == 0);
     linksMask |= (one << bit);
