@@ -66,4 +66,4 @@ CPU Caches:\
   L2 Unified 256K (x1)\
   L3 Unified 56320K (x1)\
 Load Average: 0.04, 0.01, 0.00
-<img src="docs/bench_insert_mac.png" alt="alt text">
+<img src="docs/bench_insert_ubuntu.png" alt="alt text">
