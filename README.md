@@ -26,7 +26,7 @@ Find(key) {
     Link current = 0;
     for (int b = 0; b < KEY_BIT_LEN; ++b) {
       if (key differs from nodes[current].key in the b-th bit) {
-        current = nodes[current].link[bit];
+        current = nodes[current].link[b];
       }
     }
     return current;
