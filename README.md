@@ -67,3 +67,13 @@ CPU Caches:\
   L3 Unified 56320K (x1)\
 Load Average: 0.04, 0.01, 0.00
 <img src="docs/bench_insert_ubuntu.png" alt="alt text">
+
+**Ubuntu Host**\
+Run on (12 X 4100 MHz CPU s)
+CPU Caches:
+  L1 Data 32K (x6)
+  L1 Instruction 32K (x6)
+  L2 Unified 256K (x6)
+  L3 Unified 9216K (x1)
+Load Average: 0.90, 0.72, 0.74
+<img src="docs/bench_insert_ubuntu_host.png" alt="alt text">
