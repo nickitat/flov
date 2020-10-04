@@ -1,7 +1,7 @@
 [![Build Status](https://travis-ci.com/nickitat/flov.svg?branch=master)](https://travis-ci.com/nickitat/flov)
 
 # flov
-It is an attempt to implement a cache oblivious data structure with the HashTable interface but using the approach different from both probing and chaining.
+It is an attempt to implement a data structure with the HashTable interface but using the approach different from both probing and chaining.
 
 ## The problem
 So, we need a data structure supporting operations `Insert(key)` and `Find(key)`. \
